@@ -1,0 +1,9 @@
+{
+  "name": "lumi-bot-backend",
+  "version": "1.0.0",
+  "description": "Backend para gestionar reportes a GitHub",
+  "main": "index.js",
+  "dependencies": {
+    "@octokit/rest": "^20.1.1"
+  }
+}
