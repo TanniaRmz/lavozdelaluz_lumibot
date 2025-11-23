@@ -11,6 +11,7 @@
         /* === FONDO EXTERIOR (BODY) === */
         body {
             font-family: Arial, sans-serif;
+            /* Asegúrate de que este archivo 'Fondo animado.avif' exista en tu repositorio */
             background-image: url('Fondo animado.avif'); 
             background-size: cover; 
             background-position: center; 
@@ -128,6 +129,7 @@
             flex-grow: 1;
             padding: 10px;
             overflow-y: auto;
+            /* Asegúrate de que este archivo 'Luminarias aguascalientes.jpeg' exista en tu repositorio */
             background-image: url('Luminarias aguascalientes.jpeg'); 
             background-size: cover; 
             background-position: center; 
@@ -314,14 +316,14 @@
         const splashScreen = document.getElementById('splash-screen');
         const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
         const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter';
-        const REPORTS_DATABASE_KEY = 'lumi-bot-reports-db'; 
+        
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
         // --- PALABRAS CLAVE PARA DETECTAR EL INICIO DE LA FALLA ---
         const FALLA_KEYWORDS = [
             "la luminaria esta", "está parpadeando", "esta parpadeando", "está apagada", "esta apagada", 
             "no prende", "enciende de dia", "prende y apaga", "está fundida", "esta fundida", 
-            "hace corto", "la lampara esta", "la luz esta"
+            "hace corto", "la lampara esta", "la luz esta", "está rota"
         ];
         
         // Estado: Almacena temporalmente la ubicación para el reporte
@@ -332,7 +334,7 @@
 
         const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
-        // --- OBJETO DE RESPUESTAS PERSONALIZADAS (Mantenido) ---
+        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ---
         const RESPUESTAS = {
             "hola": {
                 "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
@@ -378,7 +380,7 @@
         function appendMessage(text, sender, imageURL = null) {
             const time = getCurrentTime();
             const messageDiv = document.createElement('div');
-            // Reemplaza \n (saltos de línea) por <br>
+            // Reemplaza \n (saltos de línea) por <br> y da formato a negritas
             const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             messageDiv.classList.add('message-bubble', sender === 'bot' ? 'bot-message' : 'user-message');
 
@@ -416,6 +418,10 @@
                 const item = RESPUESTAS[key];
                 for (const variant of item.variantes) {
                     if (lowerCaseText.includes(variant.toLowerCase())) {
+                        // Si es la respuesta para iniciar seguimiento, activamos la bandera
+                        if (key === "estado de reporte") {
+                            waitingForFolio = true;
+                        }
                         return item.respuesta;
                     }
                 }
@@ -426,8 +432,8 @@
         function processUserMessage(userText) {
             const botResponse = getBotResponse(userText);
             
+            // Si la respuesta es la de seguimiento, la enviamos con un ligero retraso
             if (botResponse.startsWith("INICIAR SEGUIMIENTO:")) {
-                waitingForFolio = true;
                 const displayResponse = botResponse.substring("INICIAR SEGUIMIENTO:".length).trim();
                 setTimeout(() => {
                     appendMessage(displayResponse, 'bot');
@@ -439,16 +445,12 @@
             }
         }
 
-        // --- FUNCIÓN AÑADIDA PARA EL BACKEND (PASO 3) ---
-
         /**
-         * @description Envia los datos del reporte a la función Serverless de Vercel para guardar en GitHub.
-         * @param {object} reportData 
-         * @returns {boolean} True si la llamada fue exitosa (aunque el chat no espera el resultado).
+         * @description Envia los datos del reporte al Serverless API para guardar en GitHub.
+         * Requiere que el backend (api/report.js) esté desplegado en Vercel/Netlify.
          */
         async function sendReportToBackend(reportData) {
-            // La URL de tu función API será: https://[nombre-proyecto-vercel].vercel.app/api/report
-            // Usamos ruta relativa porque Vercel/Netlify la maneja automáticamente.
+            // Usa la ruta relativa /api/report
             const API_URL = '/api/report'; 
 
             try {
@@ -464,11 +466,11 @@
 
                 if (response.ok && result.success) {
                     console.log('Reporte enviado a GitHub con éxito:', result.commit);
+                    appendMessage(`✅ **Confirmación de Guardado:** El reporte se ha guardado en tu repositorio de GitHub. ¡Trabajo hecho!`, 'bot');
                     return true;
                 } else {
                     console.error('Error al guardar en el backend:', result.error || response.statusText);
-                    // Puedes añadir un mensaje de error al usuario aquí si lo deseas, pero se sigue mostrando el folio
-                    appendMessage(`⚠️ **Error de Guardado:** No se pudo guardar el reporte con Folio ${reportData.folio} en GitHub. Por favor, toma una captura de pantalla.`, 'bot');
+                    appendMessage(`⚠️ **Error de Guardado:** El servidor reportó un error (${result.error || response.statusText}). Por favor, toma una captura de pantalla.`, 'bot');
                     return false; 
                 }
 
@@ -490,6 +492,7 @@
                 return;
             }
 
+            // Si hay imagen, creamos la URL local para mostrar
             if (file) {
                 imageURL = URL.createObjectURL(file);
             }
@@ -500,8 +503,8 @@
             if (userText || file) {
                 const textToProcess = userText || "quiero reportar una falla";
 
-                // LÓGICA DE REPORTE FINAL: Se activa si ya se obtuvo la ubicación y el usuario envía datos.
-                if (currentReportLocation && (textToProcess.length > 10 || file)) {
+                // LÓGICA DE REPORTE FINAL: Se activa si ya se obtuvo la ubicación (o se rechazó) y el usuario envía el texto
+                if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
                     const folio = getNextFolio();
                     const textoCompleto = userText.trim();
@@ -522,20 +525,18 @@
                     }
 
                     if (keywordFound) {
-                        direccion = textoCompleto.substring(0, splitIndex).trim().replace(/\s+(y|con|la)\s*$/i, '').trim();
+                        direccion = textoCompleto.substring(0, splitIndex).trim().replace(/\s+(y|con|la|el)\s*$/i, '').trim();
                         descripcionFalla = textoCompleto.substring(splitIndex).trim();
                         
-                         // Ajustar la descripción para claridad
+                        // Ajustar la descripción para claridad
                         if (descripcionFalla.toLowerCase().startsWith('la luminaria esta')) {
-                            descripcionFalla = descripcionFalla.substring('la luminaria esta'.length).trim();
-                            descripcionFalla = 'Luminaria está ' + descripcionFalla;
+                            descripcionFalla = 'Luminaria está ' + descripcionFalla.substring('la luminaria esta'.length).trim();
                         } else if (descripcionFalla.toLowerCase().startsWith('la lampara esta')) {
-                             descripcionFalla = descripcionFalla.substring('la lampara esta'.length).trim();
-                            descripcionFalla = 'Luminaria está ' + descripcionFalla;
+                            descripcionFalla = 'Luminaria está ' + descripcionFalla.substring('la lampara esta'.length).trim();
                         }
                         
                     } else if (textoCompleto.split('\n').length > 1) {
-                         // Fallback: Si no hay palabra clave, separa por salto de línea
+                        // Fallback: Si no hay palabra clave, separa por salto de línea
                         const parts = textoCompleto.split('\n');
                         direccion = parts[0].trim();
                         descripcionFalla = parts.slice(1).join(' ').trim();
@@ -551,8 +552,10 @@
                         fecha: new Date().toLocaleString(),
                         direccion: direccion,
                         descripcion_falla: descripcionFalla,
-                        ubicacionGPS: currentReportLocation,
-                        imagenURL: imageURL || 'No',
+                        // Aquí enviamos el objeto o el string 'No obtenida'
+                        ubicacionGPS: currentReportLocation.latitude ? 
+                            `${currentReportLocation.latitude}, ${currentReportLocation.longitude}` : 'No obtenida / Permiso rechazado', 
+                        imagenURL: file ? `Adjunta (${file.name})` : 'No',
                         estado: 'Reportado'
                     };
 
@@ -567,13 +570,14 @@
                         **Dirección:** ${direccion}
                         **Falla de la Luminaria:** ${descripcionFalla}
                         
-                        **Ubicación GPS:** Obtenida y adjunta.
+                        **Ubicación GPS:** ${reportData.ubicacionGPS}
                         **Imagen:** ${file ? 'Sí' : 'No'}
                         
-                        Tu reporte ha sido registrado. Conserva el **Folio ${folio}** para dar seguimiento. ¡El reporte se está enviando a GitHub automáticamente!
+                        Tu reporte ha sido registrado. Conserva el **Folio ${folio}** para dar seguimiento. ¡El reporte se está enviando al servidor de procesamiento!
                     `;
                     appendMessage(reportSummary, 'bot');
-                    currentReportLocation = null;
+                    // Reiniciar el estado del reporte después de generar el folio
+                    currentReportLocation = undefined;
 
                 } else {
                     processUserMessage(textToProcess);
@@ -590,7 +594,7 @@
             }
         }
         
-        // --- LÓGICA DE INICIO Y GPS (Mantenido) ---
+        // --- LÓGICA DE INICIO Y GPS ---
         
         function sendBotInitialMessage() {
             const welcomeMessage = RESPUESTAS["hola"].respuesta + 
@@ -636,13 +640,15 @@
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         };
-                        const mapLink = `http://googleusercontent.com/maps.google.com/4{currentReportLocation.latitude},${currentReportLocation.longitude}`;
+                        // LÍNEA CORREGIDA PARA EL ENLACE DEL MAPA
+                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Latitud: ${currentReportLocation.latitude.toFixed(5)}, Longitud: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
                         appendMessage(`Ahora, por favor, escribe la **dirección exacta** seguida de la falla (ej: **Calle 5 y la luminaria parpadea**). Intenta ser claro.`, 'bot');
                     },
                     (error) => {
+                        currentReportLocation = { error: error.message || 'Error desconocido' };
                         let errorMessage = 'No fue posible obtener tu ubicación GPS.';
                         if (error.code === error.PERMISSION_DENIED) {
                             errorMessage += '<br>Necesitas aceptar el permiso de ubicación.';
@@ -650,15 +656,22 @@
                             errorMessage += `<br>Error: ${error.message}`;
                         }
                         appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente.`, 'bot');
+                        // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
+                        currentReportLocation = { latitude: null, longitude: null }; 
                     },
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             } else {
                 appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente.", 'bot');
+                 // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
+                currentReportLocation = { latitude: null, longitude: null }; 
             }
         }
 
         function startQuickReport() {
+            // Reiniciamos el estado para asegurar que la ubicación se pida de nuevo
+            currentReportLocation = null; 
+            
             appendMessage("Quiero hacer un Reporte Rápido.", 'user');
             processUserMessage("reportar");
             requestLocation(); 
