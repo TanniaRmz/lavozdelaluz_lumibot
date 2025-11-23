@@ -3,7 +3,7 @@
 const { Octokit } = require("@octokit/rest");
 
 // --- ⚠️ ¡IMPORTANTE! Reemplaza con tus datos de Repositorio
-const REPO_OWNER = 'TanniaPmz'; // Tu nombre de usuario
+const REPO_OWNER = 'TanniaRmz'; // Tu nombre de usuario
 const REPO_NAME = 'lavozdelaluz_lumibot'; 
 // ---
 
