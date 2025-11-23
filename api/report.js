@@ -5,6 +5,7 @@ const { Octokit } = require("@octokit/rest");
 // --- ⚠️ ¡IMPORTANTE! Reemplaza con tus datos de Repositorio
 const REPO_OWNER = 'TanniaRmz'; // Tu nombre de usuario
 const REPO_NAME = 'lavozdelaluz_lumibot'; 
+const branch: 'main', // ¿Tu rama es 'main' o 'master'? Verifica la que usas en GitHub.
 // ---
 
 // El Token es extraído de las Variables de Entorno, NUNCA expuesto en el código.
