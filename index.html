@@ -1,269 +1,269 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lumi-Bot | Alumbrado Público</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        /* --- ESTILOS CSS --- */
-        
-        /* === FONDO EXTERIOR (BODY) === */
-        body {
-            font-family: Arial, sans-serif;
-            /* Asegúrate de que este archivo 'Fondo animado.avif' exista en tu repositorio */
-            background-image: url('Fondo animado.avif'); 
-            background-size: cover; 
-            background-position: center; 
-            background-attachment: fixed; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden; 
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumi-Bot | Alumbrado Público</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* --- ESTILOS CSS --- */
+        
+        /* === FONDO EXTERIOR (BODY) === */
+        body {
+            font-family: Arial, sans-serif;
+            /* Asegúrate de que este archivo 'Fondo animado.avif' exista en tu repositorio */
+            background-image: url('Fondo animado.avif'); 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; 
+        }
 
-        /* === PANTALLA DE CARGA (SPLASH SCREEN) === */
-        #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #128c7e; 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
-        }
+        /* === PANTALLA DE CARGA (SPLASH SCREEN) === */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #128c7e; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
 
-        #splash-screen img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            animation: bounce 1s infinite alternate;
-        }
-        
-        #splash-screen h1 {
-            color: white;
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
+        #splash-screen img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            animation: bounce 1s infinite alternate;
+        }
+        
+        #splash-screen h1 {
+            color: white;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
 
-        #splash-screen p {
-            color: #dcf8c6;
-            font-size: 1em;
-        }
+        #splash-screen p {
+            color: #dcf8c6;
+            font-size: 1em;
+        }
 
-        @keyframes bounce {
-            from {
-                transform: scale(1);
-            }
-            to {
-                transform: scale(1.05);
-            }
-        }
-        
-        /* === CONTENEDOR DEL CHAT (CHAT CONTAINER) === */
-        .chat-container {
-            width: 100%;
-            max-width: 420px;
-            height: 80vh;
-            max-height: 700px;
-            background-color: #f7f7f7; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative; 
-            opacity: 0; 
-            transition: opacity 0.5s ease-in;
-        }
+        @keyframes bounce {
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* === CONTENEDOR DEL CHAT (CHAT CONTAINER) === */
+        .chat-container {
+            width: 100%;
+            max-width: 420px;
+            height: 80vh;
+            max-height: 700px;
+            background-color: #f7f7f7; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in;
+        }
 
-        /* === ESTILOS DEL CHAT (RESTO) === */
-        .chat-header {
-            background-color: #128c7e;
-            color: white;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+        /* === ESTILOS DEL CHAT (RESTO) === */
+        .chat-header {
+            background-color: #128c7e;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-        .header-avatar {
-            background-color: #f0f0f0;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 10px;
-            overflow: hidden;
-        }
+        .header-avatar {
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            overflow: hidden;
+        }
 
-        .header-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .header-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-        .header-info h3 {
-            margin: 0;
-            font-size: 1.1em;
-        }
+        .header-info h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
 
-        .header-info p {
-            margin: 0;
-            font-size: 0.8em;
-            opacity: 0.8;
-        }
+        .header-info p {
+            margin: 0;
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
 
-        .chat-body {
-            flex-grow: 1;
-            padding: 10px;
-            overflow-y: auto;
-            /* Asegúrate de que este archivo 'Luminarias aguascalientes.jpeg' exista en tu repositorio */
-            background-image: url('Luminarias aguascalientes.jpeg'); 
-            background-size: cover; 
-            background-position: center; 
-            background-color: #e5ddd5; 
-            display: flex;
-            flex-direction: column;
-        }
+        .chat-body {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            /* Asegúrate de que este archivo 'Luminarias aguascalientes.jpeg' exista en tu repositorio */
+            background-image: url('Luminarias aguascalientes.jpeg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-color: #e5ddd5; 
+            display: flex;
+            flex-direction: column;
+        }
 
-        .message-bubble {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 18px;
-            margin-bottom: 8px;
-            line-height: 1.4;
-            position: relative;
-            word-wrap: break-word;
-        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 18px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+        }
 
-        .bot-message {
-            background-color: #ffffff; 
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
-        }
+        .bot-message {
+            background-color: #ffffff; 
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
 
-        .user-message {
-            background-color: #dcf8c6; 
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
-            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
-        }
+        .user-message {
+            background-color: #dcf8c6; 
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
 
-        .message-time {
-            display: block;
-            font-size: 0.65em;
-            color: #777;
-            text-align: right;
-            margin-top: 5px;
-            line-height: 1;
-        }
-        
-        .message-image-container {
-            max-width: 100%;
-            margin-bottom: 5px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+        .message-time {
+            display: block;
+            font-size: 0.65em;
+            color: #777;
+            text-align: right;
+            margin-top: 5px;
+            line-height: 1;
+        }
+        
+        .message-image-container {
+            max-width: 100%;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-        .message-image {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+        .message-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-        .chat-footer {
-            padding: 8px;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-        }
+        .chat-footer {
+            padding: 8px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
 
-        .chat-footer input[type="text"] {
-            flex-grow: 1;
-            border: none;
-            padding: 12px 15px;
-            border-radius: 20px;
-            font-size: 1em;
-            margin: 0 8px;
-            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
-        }
+        .chat-footer input[type="text"] {
+            flex-grow: 1;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 20px;
+            font-size: 1em;
+            margin: 0 8px;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+        }
 
-        .chat-footer button {
-            background-color: #128c7e;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 4px;
-            transition: background-color 0.3s;
-        }
+        .chat-footer button {
+            background-color: #128c7e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 4px;
+            transition: background-color 0.3s;
+        }
 
-        .chat-footer button:hover {
-            background-color: #0e6c60;
-        }
+        .chat-footer button:hover {
+            background-color: #0e6c60;
+        }
 
-        #attach-button {
-            background-color: transparent;
-            color: #777;
-            width: 44px;
-            height: 44px;
-            margin-left: 4px;
-        }
-        
-        #attach-button:hover {
-            color: #555;
-            background-color: transparent;
-        }
+        #attach-button {
+            background-color: transparent;
+            color: #777;
+            width: 44px;
+            height: 44px;
+            margin-left: 4px;
+        }
+        
+        #attach-button:hover {
+            color: #555;
+            background-color: transparent;
+        }
 
-        #attach-button .material-icons {
-            transform: rotate(45deg); 
-        }
+        #attach-button .material-icons {
+            transform: rotate(45deg); 
+        }
 
-        #report-button {
-            position: absolute;
-            top: 15px; 
-            right: 15px; 
-            background-color: #dc3545; 
-            color: white;
-            border: none;
-            border-radius: 8px; 
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s;
-            z-index: 10; 
-        }
+        #report-button {
+            position: absolute;
+            top: 15px; 
+            right: 15px; 
+            background-color: #dc3545; 
+            color: white;
+            border: none;
+            border-radius: 8px; 
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+            z-index: 10; 
+        }
 
-        #report-button:hover {
-            background-color: #c82333; 
-        }
+        #report-button:hover {
+            background-color: #c82333; 
+        }
 
-        #report-button .material-icons {
-            font-size: 24px; 
-        }
-    </style>
+        #report-button .material-icons {
+            font-size: 24px; 
+        }
+    </style>
 </head>
 <body>
 
@@ -701,3 +701,4 @@
     </script>
 </body>
 </html>
+
