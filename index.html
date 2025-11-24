@@ -125,15 +125,14 @@
             opacity: 0.8;
         }
 
+        /* 🎨 CORRECCIÓN DE ESTILO: Fondo de chat limpio para mejorar legibilidad */
         .chat-body {
             flex-grow: 1;
             padding: 10px;
             overflow-y: auto;
-            /* Asegúrate de que este archivo 'Luminarias aguascalientes.jpeg' exista en tu repositorio */
-            background-image: url('Luminarias aguascalientes.jpeg'); 
-            background-size: cover; 
-            background-position: center; 
-            background-color: #e5ddd5; 
+            /* Se quita la imagen de fondo para evitar conflictos visuales */
+            background-image: none; 
+            background-color: #e5ddd5; /* Fondo claro de WhatsApp */
             display: flex;
             flex-direction: column;
         }
@@ -146,20 +145,19 @@
             line-height: 1.4;
             position: relative;
             word-wrap: break-word;
+            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
         }
 
         .bot-message {
             background-color: #ffffff; 
             align-self: flex-start;
             border-bottom-left-radius: 2px;
-            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
         }
 
         .user-message {
             background-color: #dcf8c6; 
             align-self: flex-end;
             border-bottom-right-radius: 2px;
-            box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
         }
 
         .message-time {
@@ -267,439 +265,428 @@
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="Logo alumbrado publico cute.jpg" alt="Logo Lumi-Bot">
-        <h1>Lumi-Bot</h1>
-        <p>Iniciando servicio de alumbrado...</p>
-    </div>
+    <div id="splash-screen">
+        <img src="Logo alumbrado publico cute.jpg" alt="Logo Lumi-Bot">
+        <h1>Lumi-Bot</h1>
+        <p>Iniciando servicio de alumbrado...</p>
+    </div>
 
-    <div class="chat-container" id="chat-container">
-        
-        <button id="report-button" onclick="startQuickReport()">
-            <span class="material-icons">lightbulb_outline</span> 
-        </button>
+    <div class="chat-container" id="chat-container">
+        
+        <button id="report-button" onclick="startQuickReport()">
+            <span class="material-icons">lightbulb_outline</span> 
+        </button>
 
-        <div class="chat-header">
-            <div class="header-avatar">
-                <img src="Logo alumbrado publico cute.jpg" alt="Lumi-Bot Logo">
-            </div>
-            <div class="header-info">
-                <h3>Lumi-Bot</h3>
-                <p>Alumbrado Público | La voz de la luz</p>
-            </div>
-        </div>
+        <div class="chat-header">
+            <div class="header-avatar">
+                <img src="Logo alumbrado publico cute.jpg" alt="Lumi-Bot Logo">
+            </div>
+            <div class="header-info">
+                <h3>Lumi-Bot</h3>
+                <p>Alumbrado Público | La voz de la luz</p>
+            </div>
+        </div>
 
-        <div class="chat-body" id="chat-body">
-        </div>
+        <div class="chat-body" id="chat-body">
+        </div>
 
-        <div class="chat-footer">
-            <button id="attach-button" onclick="document.getElementById('file-input').click();">
-                <span class="material-icons">attach_file</span>
-            </button>
+        <div class="chat-footer">
+            <button id="attach-button" onclick="document.getElementById('file-input').click();">
+                <span class="material-icons">attach_file</span>
+            </button>
 
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
 
-            <input type="text" id="user-input" placeholder="Escribe..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="user-input" placeholder="Escribe..." onkeypress="handleKeyPress(event)">
 
-            <button onclick="sendMessage()">
-                <span class="material-icons">send</span>
-            </button>
-        </div>
-    </div>
+            <button onclick="sendMessage()">
+                <span class="material-icons">send</span>
+            </button>
+        </div>
+    </div>
 
-    <script>
-        // --- LÓGICA JAVASCRIPT ---
-        const chatContainer = document.getElementById('chat-container');
-        const chatBody = document.getElementById('chat-body');
-        const userInput = document.getElementById('user-input');
-        const fileInput = document.getElementById('file-input');
-        const splashScreen = document.getElementById('splash-screen');
-        // Claves de almacenamiento local
-        const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
-        const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter';
-        
-        const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
+    <script>
+        // --- LÓGICA JAVASCRIPT ---
+        const chatContainer = document.getElementById('chat-container');
+        const chatBody = document.getElementById('chat-body');
+        const userInput = document.getElementById('user-input');
+        const fileInput = document.getElementById('file-input');
+        const splashScreen = document.getElementById('splash-screen');
+        // Claves de almacenamiento local
+        const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
+        const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter';
+        
+        const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
-        // Estado: Almacena temporalmente la ubicación para el reporte
-        let currentReportLocation = null;
-        
-        // Estado: Indica si el bot está esperando el folio o la dirección del usuario
-        let waitingForFolio = false;
+        // Estado: Almacena temporalmente la ubicación para el reporte
+        let currentReportLocation = null;
+        
+        // Estado: Indica si el bot está esperando el folio o la dirección del usuario
+        let waitingForFolio = false;
 
-        const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
+        const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
-        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ACTUALIZADO ---
-        const RESPUESTAS = {
-            "hola": {
-                "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
-                "respuesta": "¡Hola! Soy **Lumi-Bot**, tu asistente para Alumbrado Público. ¿En qué puedo ayudarte hoy?"
-            },
-            "quién eres": {
-                "variantes": ["quién eres", "quien eres", "qué eres", "que eres"],
-                "respuesta": "Soy un Chat-Bot diseñado para darte información y ayudarte a gestionar reportes del área de Alumbrado Público. **¡Mi misión es que tu calle brille!**"
-            },
-            "qué haces": {
-                "variantes": ["qué haces", "que haces", "a qué te dedicas"],
-                "respuesta": "Puedo responder dudas sobre reportes, servicios y horarios. Si quieres reportar una falla puedes escribir **'Reportar'** o si quieres saber del estado de tu reporte escribe **'Seguimiento'**."
-            },
-            "reportar": {
-                "variantes": ["cómo reporto una falla", "como reporto una falla", "quiero reportar una falla", "reportar", "reporte rapido"],
-                "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **Dirección exacta Y LA DESCRIPCIÓN DE LA FALLA SEPARADA POR UNA COMA** (ej: calle X, luminaria parpadea). Puedes adjuntar una **foto** (opcional)."
-            },
-            "horario": {
-                "variantes": ["cuál es tu horario", "cual es tu horario", "horario de atención", "horario", "cual es el horario de alumbrado publico", "cual es el horario"],
-                "respuesta": "El horario de atención de Alumbardo Publico es de **Lunes a Domingo** y circulamos las **24 horas**."
-            },
-            "estado de reporte": {
-                "variantes": ["reportes", "quiero saber de mi reporte", "seguimiento", "estado de mi reporte"],
-                "respuesta": "INICIAR SEGUIMIENTO: <br>Perfecto, voy a buscar tu reporte. Por favor, indícame tu **número de folio** o la **dirección exacta** que reportaste."
-            },
-            "gracias": { "variantes": ["gracias", "muchas gracias"], "respuesta": "¡De nada! Es un placer iluminar tu camino. " },
-            "numero": { "variantes": ["numero", "cual es el numero"], "respuesta": "El número oficial para reportes es el **072**. ¡Guárdalo! O si tienes problemas puedes llamar también a este número **449 910 1019**." },
-            
-            "link": {
-                "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
-                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n** https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/ **\nEste link te facilitará más la gestión de reportes."
-            },
-            "lamparas nuevas": {
-                "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
-                "respuesta": "Constantemente estamos actualizando la infraestructura. Para solicitar la **instalación de nuevas luminarias** o un **cambio de tecnología**, es necesario comunicarte al **072** para evaluar la viabilidad del proyecto en tu zona."
-            },
-            "significado de alumbrado publico": {
-                "variantes": ["significado de alumbrado publico", "que es alumbrado publico", "que significa alumbrado", "definicion"],
-                "respuesta": "El **Alumbrado Público** es el servicio que busca iluminar las vías de circulación y los espacios públicos. Su propósito es proporcionar **seguridad**, **visibilidad** y **mejorar la calidad de vida** de los ciudadanos durante la noche."
-            },
-            "lampara caida": {
-                "variantes": ["lampara caida", "poste caido", "luminaria tirada", "columna rota", "peligro"],
-                "respuesta": "🚨 **¡ATENCIÓN, PELIGRO!** Si una lámpara, poste o luminaria está caída, representa un riesgo eléctrico y físico. Por favor, llama inmediatamente al número de **Emergencias (911)** y notifica también al **072** para que sea atendida con máxima prioridad."
-            },
-            "fotoceldas": {
-                "variantes": ["fotoceldas", "foto celda", "porque se prende de dia", "se prende de dia"],
-                "respuesta": "Las luminarias son controladas por **fotoceldas**, que son sensores de luz. Si una lámpara enciende de día, la fotocelda probablemente está fallando. Este es un reporte común; por favor, usa **'Reportar'** para indicarnos la dirección y corregir el problema."
-            },
-            "colores de las lamparas": {
-                "variantes": ["colores de las lamparas", "luz amarilla", "luz blanca", "tipo de lampara"],
-                "respuesta": "En Aguascalientes usamos principalmente tecnología **LED (luz blanca/fría)** por su eficiencia energética. Anteriormente se usaba **Vapor de Sodio (luz amarilla)**. Si detectas un cambio de color abrupto o intermitente, podría ser señal de una falla que requiere reparación."
-            }
-        };
+        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ---
+        const RESPUESTAS = {
+            "hola": {
+                "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
+                "respuesta": "¡Hola! Soy **Lumi-Bot**, tu asistente para Alumbrado Público. ¿En qué puedo ayudarte hoy?"
+            },
+            "quién eres": {
+                "variantes": ["quién eres", "quien eres", "qué eres", "que eres"],
+                "respuesta": "Soy un Chat-Bot diseñado para darte información y ayudarte a gestionar reportes del área de Alumbrado Público. **¡Mi misión es que tu calle brille!**"
+            },
+            "qué haces": {
+                "variantes": ["qué haces", "que haces", "a qué te dedicas"],
+                "respuesta": "Puedo responder dudas sobre reportes, servicios y horarios. Si quieres reportar una falla puedes escribir **'Reportar'** o si quieres saber del estado de tu reporte escribe **'Seguimiento'**."
+            },
+            "reportar": {
+                "variantes": ["cómo reporto una falla", "como reporto una falla", "quiero reportar una falla", "reportar", "reporte rapido"],
+                "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **Dirección exacta Y LA DESCRIPCIÓN DE LA FALLA SEPARADA POR UNA COMA** (ej: calle X, luminaria parpadea). Puedes adjuntar una **foto** (opcional)."
+            },
+            "horario": {
+                "variantes": ["cuál es tu horario", "cual es tu horario", "horario de atención", "horario", "cual es el horario de alumbrado publico", "cual es el horario"],
+                "respuesta": "El horario de atención de Alumbardo Publico es de **Lunes a Domingo** y circulamos las **24 horas**."
+            },
+            "estado de reporte": {
+                "variantes": ["reportes", "quiero saber de mi reporte", "seguimiento", "estado de mi reporte"],
+                "respuesta": "INICIAR SEGUIMIENTO: <br>Perfecto, voy a buscar tu reporte. Por favor, indícame tu **número de folio** o la **dirección exacta** que reportaste."
+            },
+            "gracias": { "variantes": ["gracias", "muchas gracias"], "respuesta": "¡De nada! Es un placer iluminar tu camino. " },
+            "numero": { "variantes": ["numero", "cual es el numero"], "respuesta": "El número oficial para reportes es el **072**. ¡Guárdalo! O si tienes problemas puedes llamar también a este número **449 910 1019**." },
+            
+            "link": {
+                "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
+                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n** https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/ **\nEste link te facilitará más la gestión de reportes."
+            },
+            "lamparas nuevas": {
+                "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
+                "respuesta": "Constantemente estamos actualizando la infraestructura. Para solicitar la **instalación de nuevas luminarias** o un **cambio de tecnología**, es necesario comunicarte al **072** para evaluar la viabilidad del proyecto en tu zona."
+            },
+            "significado de alumbrado publico": {
+                "variantes": ["significado de alumbrado publico", "que es alumbrado publico", "que significa alumbrado", "definicion"],
+                "respuesta": "El **Alumbrado Público** es el servicio que busca iluminar las vías de circulación y los espacios públicos. Su propósito es proporcionar **seguridad**, **visibilidad** y **mejorar la calidad de vida** de los ciudadanos durante la noche."
+            },
+            "lampara caida": {
+                "variantes": ["lampara caida", "poste caido", "luminaria tirada", "columna rota", "peligro"],
+                "respuesta": "🚨 **¡ATENCIÓN, PELIGRO!** Si una lámpara, poste o luminaria está caída, representa un riesgo eléctrico y físico. Por favor, llama inmediatamente al número de **Emergencias (911)** y notifica también al **072** para que sea atendida con máxima prioridad."
+            },
+            "fotoceldas": {
+                "variantes": ["fotoceldas", "foto celda", "porque se prende de dia", "se prende de dia"],
+                "respuesta": "Las luminarias son controladas por **fotoceldas**, que son sensores de luz. Si una lámpara enciende de día, la fotocelda probablemente está fallando. Este es un reporte común; por favor, usa **'Reportar'** para indicarnos la dirección y corregir el problema."
+            },
+            "colores de las lamparas": {
+                "variantes": ["colores de las lamparas", "luz amarilla", "luz blanca", "tipo de lampara"],
+                "respuesta": "En Aguascalientes usamos principalmente tecnología **LED (luz blanca/fría)** por su eficiencia energética. Anteriormente se usaba **Vapor de Sodio (luz amarilla)**. Si detectas un cambio de color abrupto o intermitente, podría ser señal de una falla que requiere reparación."
+            }
+        };
 
-        // --- FUNCIONES DE UTILIDAD ---
-        
-        function getCurrentTime() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
+        // --- FUNCIONES DE UTILIDAD ---
+        
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
 
-        function saveConversation() {
-            // Guarda el HTML del chat (comentado para reiniciar siempre la conversación)
-            // if (chatContainer.style.opacity === '1') {
-            //     localStorage.setItem(CHAT_STORAGE_KEY, chatBody.innerHTML);
-            // }
-        }
-        
-        function getNextFolio() {
-            let folio = parseInt(localStorage.getItem(FOLIO_COUNTER_KEY) || '0', 10);
-            folio++;
-            localStorage.setItem(FOLIO_COUNTER_KEY, folio.toString());
-            // Formato F-001
-            return `F-${String(folio).padStart(3, '0')}`; 
-        }
+        function saveConversation() {
+            // Guarda la conversación (actualmente desactivado para reiniciar el chat en cada carga)
+        }
+        
+        function getNextFolio() {
+            let folio = parseInt(localStorage.getItem(FOLIO_COUNTER_KEY) || '0', 10);
+            folio++;
+            localStorage.setItem(FOLIO_COUNTER_KEY, folio.toString());
+            // Formato F-001
+            return `F-${String(folio).padStart(3, '0')}`; 
+        }
 
-        // --- FUNCIÓN PRINCIPAL DE MENSAJES ---
+        // --- FUNCIÓN PRINCIPAL DE MENSAJES ---
 
-        function appendMessage(text, sender, imageURL = null) {
-            const time = getCurrentTime();
-            const messageDiv = document.createElement('div');
-            // Reemplaza \n (saltos de línea) por <br> y da formato a negritas
-            const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            messageDiv.classList.add('message-bubble', sender === 'bot' ? 'bot-message' : 'user-message');
+        function appendMessage(text, sender, imageURL = null) {
+            const time = getCurrentTime();
+            const messageDiv = document.createElement('div');
+            // Reemplaza \n (saltos de línea) por <br> y da formato a negritas
+            const formattedText = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            messageDiv.classList.add('message-bubble', sender === 'bot' ? 'bot-message' : 'user-message');
 
-            let contentHTML = '';
+            let contentHTML = '';
 
-            if (imageURL) {
-                contentHTML += `
-                    <div class="message-image-container">
-                        <img src="${imageURL}" alt="Imagen adjunta" class="message-image">
-                    </div>
-                `;
-            }
+            if (imageURL) {
+                contentHTML += `
+                    <div class="message-image-container">
+                        <img src="${imageURL}" alt="Imagen adjunta" class="message-image">
+                    </div>
+                `;
+            }
 
-            contentHTML += `<span>${formattedText}</span>`;
-            contentHTML += `<span class="message-time">${time}</span>`;
+            contentHTML += `<span>${formattedText}</span>`;
+            contentHTML += `<span class="message-time">${time}</span>`;
 
-            messageDiv.innerHTML = contentHTML;
-            chatBody.appendChild(messageDiv);
+            messageDiv.innerHTML = contentHTML;
+            chatBody.appendChild(messageDiv);
 
-            chatBody.scrollTop = chatBody.scrollHeight;
-            saveConversation();
-        }
+            chatBody.scrollTop = chatBody.scrollHeight;
+            saveConversation();
+        }
 
-        // --- LÓGICA DE RESPUESTAS ---
+        // --- LÓGICA DE RESPUESTAS ---
 
-        function getBotResponse(userText) {
-            const lowerCaseText = userText.toLowerCase().trim();
+        function getBotResponse(userText) {
+            const lowerCaseText = userText.toLowerCase().trim();
 
-            if (waitingForFolio) {
-                // Si estamos esperando el folio, cualquier texto es el folio/dirección
-                if (lowerCaseText.length > 2) { 
-                    waitingForFolio = false; 
-                    return DETAILED_STATUS_MESSAGE; 
-                }
-            }
-            
-            for (const key in RESPUESTAS) {
-                const item = RESPUESTAS[key];
-                for (const variant of item.variantes) {
-                    if (lowerCaseText.includes(variant.toLowerCase())) {
-                        // Si es la respuesta para iniciar seguimiento, activamos la bandera
-                        if (key === "estado de reporte") {
-                            waitingForFolio = true;
-                        }
-                        return item.respuesta;
-                    }
-                }
-            }
-            return DEFAULT_RESPONSE;
-        }
+            if (waitingForFolio) {
+                // Si estamos esperando el folio, cualquier texto es el folio/dirección
+                if (lowerCaseText.length > 2) { 
+                    waitingForFolio = false; 
+                    return DETAILED_STATUS_MESSAGE; 
+                }
+            }
+            
+            for (const key in RESPUESTAS) {
+                const item = RESPUESTAS[key];
+                for (const variant of item.variantes) {
+                    if (lowerCaseText.includes(variant.toLowerCase())) {
+                        // Si es la respuesta para iniciar seguimiento, activamos la bandera
+                        if (key === "estado de reporte") {
+                            waitingForFolio = true;
+                        }
+                        return item.respuesta;
+                    }
+                }
+            }
+            return DEFAULT_RESPONSE;
+        }
 
-        function processUserMessage(userText) {
-            const botResponse = getBotResponse(userText);
-            
-            // Si la respuesta es la de seguimiento, la enviamos con un ligero retraso
-            if (botResponse.startsWith("INICIAR SEGUIMIENTO:")) {
-                const displayResponse = botResponse.substring("INICIAR SEGUIMIENTO:".length).trim();
-                setTimeout(() => {
-                    appendMessage(displayResponse, 'bot');
-                }, 800);
-            } else {
-                setTimeout(() => {
-                    appendMessage(botResponse, 'bot');
-                }, 800);
-            }
-        }
-        
-        // =========================================================================================
-        // 🚨 CÓDIGO MODIFICADO: FUNCIÓN REAL DE ENVÍO DE REPORTE A API (PARA GUARDAR EN GITHUB)
-        // =========================================================================================
+        function processUserMessage(userText) {
+            const botResponse = getBotResponse(userText);
+            
+            // Si la respuesta es la de seguimiento, la enviamos con un ligero retraso
+            if (botResponse.startsWith("INICIAR SEGUIMIENTO:")) {
+                const displayResponse = botResponse.substring("INICIAR SEGUIMIENTO:".length).trim();
+                setTimeout(() => {
+                    appendMessage(displayResponse, 'bot');
+                }, 800);
+            } else {
+                setTimeout(() => {
+                    appendMessage(botResponse, 'bot');
+                }, 800);
+            }
+        }
+        
+        // =========================================================================================
+        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL (PARA GUARDAR EN GITHUB)
+        // =========================================================================================
 
-        // NOTA: La variable API_URL debe ser reemplazada con la URL de tu función Serverless (Vercel, Netlify, etc.)
-        const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report';
+        // 🚨 CRÍTICO: REEMPLAZA ESTA URL por la dirección de tu función serverless en Vercel.
+        // Ejemplo de URL para tu proyecto: https://lavozdelaluz-lumibot.vercel.app/api/report
+        const API_URL = 'https://[TU-PROYECTO].vercel.app/api/report'; 
 
-        function sendReportToBackend(reportData) {
-            console.log("Enviando reporte real al servidor:", reportData);
-            
-            // 1. Mostrar un mensaje de espera (Opcional, pero recomendado)
-            appendMessage(`⌛ Procesando reporte... Por favor, espera un momento.`, 'bot');
+        function sendReportToBackend(reportData) {
+            console.log("Enviando reporte al servidor:", reportData);
+            
+            // 1. Mostrar un mensaje de espera
+            appendMessage(`⌛ Procesando reporte... Guardando datos en el sistema.`, 'bot');
 
-            fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(reportData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Si la API responde con éxito
-                if (data.success) {
-                    const reportSummary = `
-                        **✅ REPORTE GENERADO CON ÉXITO**
-                        **Folio:** ${reportData.folio}
-                        **Dirección:** ${reportData.direccion}
-                        **Falla de la Luminaria:** ${reportData.descripcion_falla}        
-                        Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento. ¡Tiempo de atención: 24 a 72 horas hábiles!
-                        El archivo JSON se está guardando en tu repositorio.
-                    `;
-                    // Enviamos el resumen final después del proceso
-                    appendMessage(reportSummary, 'bot');
-                } else {
-                    // Si la API responde, pero con error (ej. error de GitHub)
-                    appendMessage(`⚠️ **Error al guardar reporte (Folio ${reportData.folio}):** No se pudo comunicar con el sistema de registro. Intenta más tarde.`, 'bot');
-                }
-            })
-            .catch(error => {
-                // Manejar errores de red o errores HTTP
-                console.error('Error de fetch o de la API:', error);
-                appendMessage(`❌ **Error de red o del servidor:** No se pudo enviar el reporte (Folio ${reportData.folio}). Por favor, llama al 072.`, 'bot');
-            });
-        }
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reportData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Si la API responde con éxito
+                if (data.success) {
+                    const reportSummary = `
+                        **✅ REPORTE GENERADO CON ÉXITO**
+                        **Folio:** ${reportData.folio}
+                        **Dirección:** ${reportData.direccion}
+                        **Falla de la Luminaria:** ${reportData.descripcion_falla}        
+                        Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento. ¡Tiempo de atención: 24 a 72 horas hábiles!
+                    `;
+                    // Enviamos el resumen final después del proceso
+                    appendMessage(reportSummary, 'bot');
+                } else {
+                    // Si la API responde, pero con error (ej. error de GitHub)
+                    appendMessage(`⚠️ **Error al guardar reporte (Folio ${reportData.folio}):** El sistema de registro falló. Intenta más tarde.`, 'bot');
+                }
+            })
+            .catch(error => {
+                // Manejar errores de red o errores HTTP
+                console.error('Error de fetch o de la API:', error);
+                appendMessage(`❌ **Error de red o del servidor:** No se pudo enviar el reporte (Folio ${reportData.folio}). Por favor, llama al 072.`, 'bot');
+            });
+        }
 
-        // =========================================================================================
-        // ⚠️ FIN DE CÓDIGO MODIFICADO ⚠️
-        // =========================================================================================
+        // --- LÓGICA DE ENVÍO Y REPORTE ---
 
+        function sendMessage() {
+            const userText = userInput.value.trim();
+            const file = fileInput.files[0];
+            let imageURL = null;
 
-        // --- LÓGICA DE ENVÍO Y REPORTE (Sin cambios, usa la nueva función sendReportToBackend) ---
+            if (!userText && !file) {
+                return;
+            }
 
-        function sendMessage() {
-            const userText = userInput.value.trim();
-            const file = fileInput.files[0];
-            let imageURL = null;
+            // Si hay imagen, creamos la URL local para mostrar
+            if (file) {
+                imageURL = URL.createObjectURL(file);
+            }
 
-            if (!userText && !file) {
-                return;
-            }
+            const messageToSend = userText || '[Imagen de Reporte Adjunta]';
+            appendMessage(messageToSend, 'user', imageURL);
 
-            // Si hay imagen, creamos la URL local para mostrar
-            if (file) {
-                imageURL = URL.createObjectURL(file);
-            }
+            if (userText || file) {
+                const textToProcess = userText || "quiero reportar una falla";
 
-            const messageToSend = userText || '[Imagen de Reporte Adjunta]';
-            appendMessage(messageToSend, 'user', imageURL);
+                // LÓGICA DE REPORTE FINAL: Si currentReportLocation está listo para recibir el texto de dirección/falla
+                if (currentReportLocation !== undefined && currentReportLocation !== null) {
+                    
+                    const folio = getNextFolio();
+                    const textoCompleto = userText.trim();
+                    let direccion = textoCompleto;
+                    let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
+                    
+                    // Lógica de separación de Dirección y Falla (Usando la Coma)
+                    const firstCommaIndex = textoCompleto.indexOf(',');
 
-            if (userText || file) {
-                const textToProcess = userText || "quiero reportar una falla";
+                    if (firstCommaIndex !== -1) {
+                        direccion = textoCompleto.substring(0, firstCommaIndex).trim();
+                        descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
+                    } 
 
-                // LÓGICA DE REPORTE FINAL: Si currentReportLocation está listo para recibir el texto de dirección/falla
-                if (currentReportLocation !== undefined && currentReportLocation !== null) {
-                    
-                    const folio = getNextFolio();
-                    const textoCompleto = userText.trim();
-                    let direccion = textoCompleto;
-                    let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
-                    
-                    // Lógica de separación de Dirección y Falla (Usando la Coma)
-                    const firstCommaIndex = textoCompleto.indexOf(',');
+                    // Validación de datos GPS
+                    const gpsString = currentReportLocation.latitude ? 
+                        `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
 
-                    if (firstCommaIndex !== -1) {
-                        direccion = textoCompleto.substring(0, firstCommaIndex).trim();
-                        descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
-                    } 
+                    // Preparar los datos a enviar
+                    const reportData = {
+                        folio: folio,
+                        fecha: new Date().toLocaleString(),
+                        direccion: direccion,
+                        descripcion_falla: descripcionFalla,
+                        ubicacionGPS: gpsString,
+                        imagenURL: file ? `Adjunta (${file.name})` : 'No',
+                        estado: 'Reportado'
+                    };
 
-                    // Validación de datos GPS
-                    const gpsString = currentReportLocation.latitude ? 
-                        `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
+                    // Enviar los datos (USA LA FUNCIÓN REAL CON FETCH)
+                    sendReportToBackend(reportData); 
 
-                    // Preparar los datos a enviar
-                    const reportData = {
-                        folio: folio,
-                        fecha: new Date().toLocaleString(),
-                        direccion: direccion,
-                        descripcion_falla: descripcionFalla,
-                        ubicacionGPS: gpsString,
-                        imagenURL: file ? `Adjunta (${file.name})` : 'No',
-                        estado: 'Reportado'
-                    };
+                    // Reiniciar el estado del reporte después de generar el folio
+                    currentReportLocation = undefined;
+                    fileInput.value = ''; // Limpiar el archivo
 
-                    // Enviar los datos (AHORA USA LA FUNCIÓN REAL CON FETCH)
-                    sendReportToBackend(reportData); 
+                } else {
+                    // Lógica de respuesta normal (no es reporte en curso)
+                    processUserMessage(textToProcess);
+                }
+            }
 
-                    // Reiniciar el estado del reporte después de generar el folio
-                    currentReportLocation = undefined;
-                    fileInput.value = ''; // Limpiar el archivo
+            userInput.value = '';
+            fileInput.value = '';
+        }
 
-                } else {
-                    // Lógica de respuesta normal (no es reporte en curso)
-                    processUserMessage(textToProcess);
-                }
-            }
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // --- LÓGICA DE GEOLOCALIZACIÓN Y REPORTE RÁPIDO ---
+        
+        function requestLocation() {
+            currentReportLocation = null; 
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentReportLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        
+                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
+                        
+                        appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
+                        
+                        // MENSAJE ACTUALIZADO PARA SOLICITAR EL FORMATO DE LA COMA
+                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria está apagada**).`, 'bot');
+                        
+                    },
+                    (error) => {
+                        let errorMessage = 'No fue posible obtener tu ubicación GPS.';
+                        if (error.code === error.PERMISSION_DENIED) {
+                            errorMessage += '<br>Necesitas aceptar el permiso de ubicación.';
+                        } else {
+                            errorMessage += `<br>Error: ${error.message}`;
+                        }
+                        appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla** para continuar.`, 'bot');
+                        // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
+                        currentReportLocation = { latitude: null, longitude: null }; 
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            } else {
+                appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla**.", 'bot');
+                // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
+                currentReportLocation = { latitude: null, longitude: null };
+            }
+        }
 
-            userInput.value = '';
-            fileInput.value = '';
-        }
-
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        }
-        
-        // --- LÓGICA DE GEOLOCALIZACIÓN Y REPORTE RÁPIDO ---
-        
-        function requestLocation() {
-            currentReportLocation = null; 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        currentReportLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        };
-                        
-                        // Corregida la sintaxis del enlace de Google Maps
-                        const mapLink = `https://maps.google.com/?q=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
-                        
-                        appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
-                        
-                        // MENSAJE ACTUALIZADO PARA SOLICITAR EL FORMATO DE LA COMA
-                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria está apagada**).`, 'bot');
-                        
-                    },
-                    (error) => {
-                        let errorMessage = 'No fue posible obtener tu ubicación GPS.';
-                        if (error.code === error.PERMISSION_DENIED) {
-                            errorMessage += '<br>Necesitas aceptar el permiso de ubicación.';
-                        } else {
-                            errorMessage += `<br>Error: ${error.message}`;
-                        }
-                        appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla** para continuar.`, 'bot');
-                        // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
-                        currentReportLocation = { latitude: null, longitude: null }; 
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
-            } else {
-                appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla**.", 'bot');
-                 // Establecemos un valor para
-                currentReportLocation = { latitude: null, longitude: null };
-            }
-        }
-
-        function startQuickReport() {
-             // 1. Mostrar el mensaje de Reporte Rápido
-             const reportMessage = RESPUESTAS["reportar"].respuesta;
-             appendMessage(reportMessage, 'bot');
-             
-             // 2. Intentar obtener la ubicación (activa el flujo de reporte)
-             requestLocation();
-        }
+        function startQuickReport() {
+             // 1. Mostrar el mensaje de Reporte Rápido
+             const reportMessage = RESPUESTAS["reportar"].respuesta;
+             appendMessage(reportMessage, 'bot');
+             
+             // 2. Intentar obtener la ubicación (activa el flujo de reporte)
+             requestLocation();
+        }
 
 
-        // --- LÓGICA DE INICIO ---
-        
-        function sendBotInitialMessage() {
-            const welcomeMessage = RESPUESTAS["hola"].respuesta + 
-                "<br><br>¿Te gustaría hacer un **Reporte Rápido**? Puedes usar el botón rojo 💡 de arriba, o escribir **'Reportar'** o ¿Tienes una pregunta sobre **Horarios** o **Seguimiento**?";
-                
-            appendMessage(welcomeMessage, 'bot');
-        }
-        
-        function loadConversation() {
-            // Elimina la conversación anterior al cargar la página (se puede comentar si se desea persistencia)
-            localStorage.removeItem(CHAT_STORAGE_KEY);
-            chatBody.innerHTML = ''; 
-        }
+        // --- LÓGICA DE INICIO ---
+        
+        function sendBotInitialMessage() {
+            const welcomeMessage = RESPUESTAS["hola"].respuesta + 
+                "<br><br>¿Te gustaría hacer un **Reporte Rápido**? Puedes usar el botón rojo 💡 de arriba, o escribir **'Reportar'** o ¿Tienes una pregunta sobre **Horarios** o **Seguimiento**?";
+                
+            appendMessage(welcomeMessage, 'bot');
+        }
+        
+        function loadConversation() {
+            // Elimina la conversación anterior al cargar la página (se puede comentar si se desea persistencia)
+            localStorage.removeItem(CHAT_STORAGE_KEY);
+            chatBody.innerHTML = ''; 
+        }
 
-        function initializeApp() {
-            loadConversation(); 
-            const splashDuration = 2000; // 2 segundos
+        function initializeApp() {
+            loadConversation(); 
+            const splashDuration = 2000; // 2 segundos
 
-            // Ocultar pantalla de carga
-            setTimeout(() => {
-                splashScreen.style.opacity = '0';
-                chatContainer.style.opacity = '1';
-                
-                setTimeout(() => {
-                    splashScreen.style.display = 'none';
-                    sendBotInitialMessage();
-                }, 500);
-                
-            }, splashDuration);
-        }
-        
-        // Iniciar la aplicación al cargar la ventana
-        window.onload = initializeApp;
+            // Ocultar pantalla de carga
+            setTimeout(() => {
+                splashScreen.style.opacity = '0';
+                chatContainer.style.opacity = '1';
+                
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    sendBotInitialMessage();
+                }, 500);
+                
+            }, splashDuration);
+        }
+        
+        // Iniciar la aplicación al cargar la ventana
+        window.onload = initializeApp;
 
-    </script>
+    </script>
 </body>
 </html>
-
-
