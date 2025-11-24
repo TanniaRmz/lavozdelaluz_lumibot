@@ -299,7 +299,7 @@
 
             <input type="file" id="file-input" accept="image/*" style="display: none;">
 
-            <input type="text" id="user-input" placeholder="Escribe la dirección, luego la falla (ej: calle 5, luminaria parpadea)..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="user-input" placeholder="Escribe..." onkeypress="handleKeyPress(event)">
 
             <button onclick="sendMessage()">
                 <span class="material-icons">send</span>
@@ -357,10 +357,9 @@
             "gracias": { "variantes": ["gracias", "muchas gracias"], "respuesta": "¡De nada! Es un placer iluminar tu camino. " },
             "numero": { "variantes": ["numero", "cual es el numero"], "respuesta": "El número oficial para reportes es el **072**. ¡Guárdalo! O si tienes problemas puedes llamar también a este número **449 910 1019**." },
             
-            // --- NUEVAS ENTRADAS SOLICITADAS ---
             "link": {
                 "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
-                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n**(https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/)**\nEste link te facilitará más la gestión de reportes."
+                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n** https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/ **\nEste link te facilitará más la gestión de reportes."
             },
             "lamparas nuevas": {
                 "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
@@ -662,4 +661,5 @@
     </script>
 </body>
 </html>
+
 
