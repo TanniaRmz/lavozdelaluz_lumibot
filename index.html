@@ -360,7 +360,7 @@
             // --- NUEVAS ENTRADAS SOLICITADAS ---
             "link": {
                 "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
-                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n\n**[Formulario de Reportes de Alumbrado Público](https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/)**\n\nEste link te facilitará más la gestión de reportes."
+                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n**(https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/)**\nEste link te facilitará más la gestión de reportes."
             },
             "lamparas nuevas": {
                 "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
@@ -491,13 +491,8 @@
             const reportSummary = `
                 **✅ REPORTE GENERADO CON ÉXITO**
                 **Folio:** ${reportData.folio}
-                
                 **Dirección:** ${reportData.direccion}
-                **Falla de la Luminaria:** ${reportData.descripcion_falla}
-                
-                **Ubicación GPS:** ${reportData.ubicacionGPS}
-                **Enlace de Mapa:** [Ver Ubicación](${mapLink})
-                
+                **Falla de la Luminaria:** ${reportData.descripcion_falla}        
                 Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento. ¡Tiempo de atención: 24 a 72 horas hábiles!
             `;
             appendMessage(reportSummary, 'bot');
@@ -667,3 +662,4 @@
     </script>
 </body>
 </html>
+
