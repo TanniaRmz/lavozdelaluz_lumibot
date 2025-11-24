@@ -299,7 +299,7 @@
 
             <input type="file" id="file-input" accept="image/*" style="display: none;">
 
-            <input type="text" id="user-input" placeholder="Escribe tu dirección y la falla (ej: calle X y la luminaria parpadea)..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="user-input" placeholder="Escribe la dirección, luego la falla (ej: calle 5, la luminaria está apagada)..." onkeypress="handleKeyPress(event)">
 
             <button onclick="sendMessage()">
                 <span class="material-icons">send</span>
@@ -319,7 +319,7 @@
         
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
-        // --- PALABRAS CLAVE PARA DETECTAR EL INICIO DE LA FALLA ---
+        // --- PALABRAS CLAVE ORIGINALES (Aún existen, pero la lógica de reporte no las usa) ---
         const FALLA_KEYWORDS = [
             "la luminaria esta", "está parpadeando", "esta parpadeando", "está apagada", "esta apagada", 
             "no prende", "enciende de dia", "prende y apaga", "está fundida", "esta fundida", 
@@ -350,7 +350,7 @@
             },
             "reportar": {
                 "variantes": ["cómo reporto una falla", "como reporto una falla", "quiero reportar una falla", "reportar", "reporte rapido"],
-                "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **dirección exacta** (calle, número, colonia) **Y LA DESCRIPCIÓN CLARA DE LA FALLA** (ej: no prende, parpadea). Puedes adjuntar una **foto** (opcional)."
+                "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **Dirección exacta Y LA DESCRIPCIÓN DE LA FALLA SEPARADA POR UNA COMA** (ej: calle X, luminaria parpadea). Puedes adjuntar una **foto** (opcional)."
             },
             "horario": {
                 "variantes": ["cuál es tu horario", "cual es tu horario", "horario de atención", "horario", "cual es el horario de alumbrado publico", "cual es el horario"],
@@ -373,7 +373,8 @@
 
         function saveConversation() {
             if (chatContainer.style.opacity === '1') {
-                localStorage.setItem(CHAT_STORAGE_KEY, chatBody.innerHTML);
+                // Comentado para reiniciar la conversación al recargar
+                // localStorage.setItem(CHAT_STORAGE_KEY, chatBody.innerHTML);
             }
         }
         
@@ -454,6 +455,7 @@
             const API_URL = '/api/report'; 
 
             try {
+                // Esta parte fallará si no hay un backend real desplegado en la ruta /api/report
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
@@ -470,13 +472,15 @@
                     return true;
                 } else {
                     console.error('Error al guardar en el backend:', result.error || response.statusText);
-                    appendMessage(`⚠️ **Error de Guardado:** El servidor reportó un error (${result.error || response.statusText}). Por favor, toma una captura de pantalla.`, 'bot');
+                    // MENSAJE ALTERNATIVO EN CASO DE ERROR DEL BACKEND
+                    appendMessage(`⚠️ **Error de Guardado:** El servidor reportó un error (${result.error || response.statusText}). Revisa la consola o despliega el backend.`, 'bot');
                     return false; 
                 }
 
             } catch (e) {
                 console.error('Error de red al conectar con la API:', e);
-                appendMessage(`⚠️ **Error de Conexión:** Falló la conexión al servidor de reportes. Revisa tu conexión.`, 'bot');
+                // MENSAJE ALTERNATIVO EN CASO DE FALLA DE CONEXIÓN
+                appendMessage(`⚠️ **Error de Conexión:** Falló la conexión al servidor de reportes (API no encontrada). El reporte solo se generó localmente.`, 'bot');
                 return false;
             }
         }
@@ -503,46 +507,27 @@
             if (userText || file) {
                 const textToProcess = userText || "quiero reportar una falla";
 
-                // LÓGICA DE REPORTE FINAL: Se activa si ya se obtuvo la ubicación (o se rechazó) y el usuario envía el texto
+                // LÓGICA DE REPORTE FINAL
                 if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
                     const folio = getNextFolio();
                     const textoCompleto = userText.trim();
                     let direccion = textoCompleto;
-                    let descripcionFalla = "Falla sin describir o el texto no permitió la separación automática.";
+                    let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
                     
-                    // --- Lógica de separación de Dirección y Falla ---
-                    const textoLower = textoCompleto.toLowerCase();
-                    let keywordFound = false;
-                    let splitIndex = -1;
+                    // --- NUEVA Lógica de separación de Dirección y Falla (Usando la Coma) ---
+                    const firstCommaIndex = textoCompleto.indexOf(',');
 
-                    for (const keyword of FALLA_KEYWORDS) {
-                        const index = textoLower.indexOf(keyword);
-                        if (index !== -1 && (splitIndex === -1 || index < splitIndex)) {
-                            splitIndex = index;
-                            keywordFound = true;
-                        }
-                    }
+                    if (firstCommaIndex !== -1) {
+                        // Separa la dirección antes de la primera coma
+                        direccion = textoCompleto.substring(0, firstCommaIndex).trim();
+                        // Separa la descripción de la falla después de la primera coma
+                        descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
+                    } 
+                    // Si no hay coma, se deja el texto completo en 'direccion' y la falla con el mensaje de error.
 
-                    if (keywordFound) {
-                        direccion = textoCompleto.substring(0, splitIndex).trim().replace(/\s+(y|con|la|el)\s*$/i, '').trim();
-                        descripcionFalla = textoCompleto.substring(splitIndex).trim();
-                        
-                        // Ajustar la descripción para claridad
-                        if (descripcionFalla.toLowerCase().startsWith('la luminaria esta')) {
-                            descripcionFalla = 'Luminaria está ' + descripcionFalla.substring('la luminaria esta'.length).trim();
-                        } else if (descripcionFalla.toLowerCase().startsWith('la lampara esta')) {
-                            descripcionFalla = 'Luminaria está ' + descripcionFalla.substring('la lampara esta'.length).trim();
-                        }
-                        
-                    } else if (textoCompleto.split('\n').length > 1) {
-                        // Fallback: Si no hay palabra clave, separa por salto de línea
-                        const parts = textoCompleto.split('\n');
-                        direccion = parts[0].trim();
-                        descripcionFalla = parts.slice(1).join(' ').trim();
-                    }
-                    
-                    if (direccion.length < 5) { direccion = "Sin dirección clara, revisar el texto completo."; }
+                    // Validaciones mínimas
+                    if (direccion.length < 5) { direccion = "Sin dirección clara. Revisar texto completo."; }
                     if (descripcionFalla.length < 5) { descripcionFalla = "Falla sin descripción clara o muy corta."; }
                     // --- Fin de Lógica de separación ---
 
@@ -604,6 +589,7 @@
         }
         
         function loadConversation() {
+            // Elimina la conversación anterior al cargar la página (se puede comentar si se desea persistencia)
             localStorage.removeItem(CHAT_STORAGE_KEY);
             chatBody.innerHTML = ''; 
         }
@@ -640,12 +626,14 @@
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         };
-                        // LÍNEA CORREGIDA PARA EL ENLACE DEL MAPA
+                        
+                        // LÍNEA CORREGIDA PARA UN ENLACE DE GOOGLE MAPS FUNCIONAL
                         const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Latitud: ${currentReportLocation.latitude.toFixed(5)}, Longitud: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
-                        appendMessage(`Ahora, por favor, escribe la **dirección exacta** seguida de la falla (ej: **Calle 5 y la luminaria parpadea**). Intenta ser claro.`, 'bot');
+                        // MENSAJE ACTUALIZADO PARA SOLICITAR EL FORMATO DE LA COMA
+                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria parpadea**).`, 'bot');
                     },
                     (error) => {
                         currentReportLocation = { error: error.message || 'Error desconocido' };
@@ -655,14 +643,14 @@
                         } else {
                             errorMessage += `<br>Error: ${error.message}`;
                         }
-                        appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente.`, 'bot');
+                        appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla**.`, 'bot');
                         // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
                         currentReportLocation = { latitude: null, longitude: null }; 
                     },
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             } else {
-                appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente.", 'bot');
+                appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla**.", 'bot');
                  // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
                 currentReportLocation = { latitude: null, longitude: null }; 
             }
