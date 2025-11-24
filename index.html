@@ -11,7 +11,6 @@
         /* === FONDO EXTERIOR (BODY) === */
         body {
             font-family: Arial, sans-serif;
-            /* Asegúrate de que este archivo 'Fondo animado.avif' exista en tu repositorio */
             background-image: url('Fondo animado.avif'); 
             background-size: cover; 
             background-position: center; 
@@ -125,14 +124,17 @@
             opacity: 0.8;
         }
 
-        /* 🎨 CORRECCIÓN DE ESTILO: Fondo de chat limpio para mejorar legibilidad */
+        /* 🎨 RESTAURACIÓN DE FONDO DE CHAT CON MAYOR OPACIDAD DE FONDO BASE */
         .chat-body {
             flex-grow: 1;
             padding: 10px;
             overflow-y: auto;
-            /* Se quita la imagen de fondo para evitar conflictos visuales */
-            background-image: none; 
-            background-color: #e5ddd5; /* Fondo claro de WhatsApp */
+            /* TU IMAGEN DE FONDO */
+            background-image: url('Luminarias aguascalientes.jpeg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-color: rgba(229, 221, 213, 0.7); /* Color base claro con 70% de opacidad para la imagen de fondo */
+            background-blend-mode: color; /* Mezcla el color base con la imagen para aclararla */
             display: flex;
             flex-direction: column;
         }
@@ -391,7 +393,7 @@
         }
 
         function saveConversation() {
-            // Guarda la conversación (actualmente desactivado para reiniciar el chat en cada carga)
+            // Guarda la conversación (actualmente desactivado)
         }
         
         function getNextFolio() {
@@ -401,8 +403,6 @@
             // Formato F-001
             return `F-${String(folio).padStart(3, '0')}`; 
         }
-
-        // --- FUNCIÓN PRINCIPAL DE MENSAJES ---
 
         function appendMessage(text, sender, imageURL = null) {
             const time = getCurrentTime();
@@ -431,13 +431,10 @@
             saveConversation();
         }
 
-        // --- LÓGICA DE RESPUESTAS ---
-
         function getBotResponse(userText) {
             const lowerCaseText = userText.toLowerCase().trim();
 
             if (waitingForFolio) {
-                // Si estamos esperando el folio, cualquier texto es el folio/dirección
                 if (lowerCaseText.length > 2) { 
                     waitingForFolio = false; 
                     return DETAILED_STATUS_MESSAGE; 
@@ -448,7 +445,6 @@
                 const item = RESPUESTAS[key];
                 for (const variant of item.variantes) {
                     if (lowerCaseText.includes(variant.toLowerCase())) {
-                        // Si es la respuesta para iniciar seguimiento, activamos la bandera
                         if (key === "estado de reporte") {
                             waitingForFolio = true;
                         }
@@ -462,7 +458,6 @@
         function processUserMessage(userText) {
             const botResponse = getBotResponse(userText);
             
-            // Si la respuesta es la de seguimiento, la enviamos con un ligero retraso
             if (botResponse.startsWith("INICIAR SEGUIMIENTO:")) {
                 const displayResponse = botResponse.substring("INICIAR SEGUIMIENTO:".length).trim();
                 setTimeout(() => {
@@ -479,14 +474,12 @@
         // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL (PARA GUARDAR EN GITHUB)
         // =========================================================================================
 
-        // 🚨 CRÍTICO: REEMPLAZA ESTA URL por la dirección de tu función serverless en Vercel.
-        // Ejemplo de URL para tu proyecto: https://lavozdelaluz-lumibot.vercel.app/api/report
-        const API_URL = 'https://[TU-PROYECTO].vercel.app/api/report'; 
+        // 🟢 URL CORREGIDA: Usando tu dominio conocido + el endpoint /api/report
+        const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report'; 
 
         function sendReportToBackend(reportData) {
             console.log("Enviando reporte al servidor:", reportData);
             
-            // 1. Mostrar un mensaje de espera
             appendMessage(`⌛ Procesando reporte... Guardando datos en el sistema.`, 'bot');
 
             fetch(API_URL, {
@@ -497,32 +490,32 @@
                 body: JSON.stringify(reportData)
             })
             .then(response => {
+                // Si la respuesta no es 2xx, lanza un error para ir al .catch
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                // Si la API responde con éxito
-                if (data.success) {
+                // IMPORTANTE: El backend DEBE responder con { success: true }
+                if (data.success) { 
                     const reportSummary = `
                         **✅ REPORTE GENERADO CON ÉXITO**
                         **Folio:** ${reportData.folio}
                         **Dirección:** ${reportData.direccion}
                         **Falla de la Luminaria:** ${reportData.descripcion_falla}        
-                        Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento. ¡Tiempo de atención: 24 a 72 horas hábiles!
+                        Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento.
                     `;
-                    // Enviamos el resumen final después del proceso
                     appendMessage(reportSummary, 'bot');
                 } else {
-                    // Si la API responde, pero con error (ej. error de GitHub)
-                    appendMessage(`⚠️ **Error al guardar reporte (Folio ${reportData.folio}):** El sistema de registro falló. Intenta más tarde.`, 'bot');
+                    // Si el servidor responde pero indica fallo interno (ej: GitHub rechaza el commit)
+                    appendMessage(`⚠️ **Fallo en el Sistema de Registro (Folio ${reportData.folio}):** El servidor respondió con un error interno. Intenta más tarde o llama al 072.`, 'bot');
                 }
             })
             .catch(error => {
-                // Manejar errores de red o errores HTTP
+                // Manejar errores de red o errores HTTP lanzados
                 console.error('Error de fetch o de la API:', error);
-                appendMessage(`❌ **Error de red o del servidor:** No se pudo enviar el reporte (Folio ${reportData.folio}). Por favor, llama al 072.`, 'bot');
+                appendMessage(`❌ **Error de red o del servidor (Folio ${reportData.folio}):** No se pudo contactar al sistema. Si tu reporte se guardó, espera el resumen. De lo contrario, llama al 072.`, 'bot');
             });
         }
 
@@ -537,7 +530,6 @@
                 return;
             }
 
-            // Si hay imagen, creamos la URL local para mostrar
             if (file) {
                 imageURL = URL.createObjectURL(file);
             }
@@ -548,7 +540,6 @@
             if (userText || file) {
                 const textToProcess = userText || "quiero reportar una falla";
 
-                // LÓGICA DE REPORTE FINAL: Si currentReportLocation está listo para recibir el texto de dirección/falla
                 if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
                     const folio = getNextFolio();
@@ -556,7 +547,6 @@
                     let direccion = textoCompleto;
                     let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
                     
-                    // Lógica de separación de Dirección y Falla (Usando la Coma)
                     const firstCommaIndex = textoCompleto.indexOf(',');
 
                     if (firstCommaIndex !== -1) {
@@ -564,11 +554,9 @@
                         descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
                     } 
 
-                    // Validación de datos GPS
                     const gpsString = currentReportLocation.latitude ? 
                         `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
 
-                    // Preparar los datos a enviar
                     const reportData = {
                         folio: folio,
                         fecha: new Date().toLocaleString(),
@@ -579,15 +567,12 @@
                         estado: 'Reportado'
                     };
 
-                    // Enviar los datos (USA LA FUNCIÓN REAL CON FETCH)
                     sendReportToBackend(reportData); 
 
-                    // Reiniciar el estado del reporte después de generar el folio
                     currentReportLocation = undefined;
-                    fileInput.value = ''; // Limpiar el archivo
+                    fileInput.value = ''; 
 
                 } else {
-                    // Lógica de respuesta normal (no es reporte en curso)
                     processUserMessage(textToProcess);
                 }
             }
@@ -614,11 +599,11 @@
                             longitude: position.coords.longitude
                         };
                         
+                        // Enlace corregido para Google Maps
                         const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
-                        // MENSAJE ACTUALIZADO PARA SOLICITAR EL FORMATO DE LA COMA
                         appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria está apagada**).`, 'bot');
                         
                     },
@@ -630,48 +615,37 @@
                             errorMessage += `<br>Error: ${error.message}`;
                         }
                         appendMessage(`⚠️ **Alerta:** ${errorMessage}<br>Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla** para continuar.`, 'bot');
-                        // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
                         currentReportLocation = { latitude: null, longitude: null }; 
                     },
                     { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                 );
             } else {
                 appendMessage("⚠️ **Error:** Tu navegador no soporta la geolocalización. Por favor, proporciona la dirección exacta y la descripción de la falla manualmente, usando el formato **Dirección, Falla**.", 'bot');
-                // Establecemos un valor para que sendMessage sepa que ya se intentó la ubicación
                 currentReportLocation = { latitude: null, longitude: null };
             }
         }
 
         function startQuickReport() {
-             // 1. Mostrar el mensaje de Reporte Rápido
              const reportMessage = RESPUESTAS["reportar"].respuesta;
              appendMessage(reportMessage, 'bot');
-             
-             // 2. Intentar obtener la ubicación (activa el flujo de reporte)
              requestLocation();
         }
 
-
-        // --- LÓGICA DE INICIO ---
-        
         function sendBotInitialMessage() {
             const welcomeMessage = RESPUESTAS["hola"].respuesta + 
                 "<br><br>¿Te gustaría hacer un **Reporte Rápido**? Puedes usar el botón rojo 💡 de arriba, o escribir **'Reportar'** o ¿Tienes una pregunta sobre **Horarios** o **Seguimiento**?";
-                
             appendMessage(welcomeMessage, 'bot');
         }
         
         function loadConversation() {
-            // Elimina la conversación anterior al cargar la página (se puede comentar si se desea persistencia)
             localStorage.removeItem(CHAT_STORAGE_KEY);
             chatBody.innerHTML = ''; 
         }
 
         function initializeApp() {
             loadConversation(); 
-            const splashDuration = 2000; // 2 segundos
+            const splashDuration = 2000; 
 
-            // Ocultar pantalla de carga
             setTimeout(() => {
                 splashScreen.style.opacity = '0';
                 chatContainer.style.opacity = '1';
@@ -684,9 +658,12 @@
             }, splashDuration);
         }
         
-        // Iniciar la aplicación al cargar la ventana
         window.onload = initializeApp;
 
     </script>
 </body>
 </html>
+
+</body>
+</html>
+
