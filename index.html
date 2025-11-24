@@ -299,7 +299,7 @@
 
             <input type="file" id="file-input" accept="image/*" style="display: none;">
 
-            <input type="text" id="user-input" placeholder="Escribe la dirección, luego la falla (ej: calle 5, la luminaria está apagada)..." onkeypress="handleKeyPress(event)">
+            <input type="text" id="user-input" placeholder="Escribe..." onkeypress="handleKeyPress(event)">
 
             <button onclick="sendMessage()">
                 <span class="material-icons">send</span>
@@ -323,8 +323,7 @@
         const FALLA_KEYWORDS = [
             "la luminaria esta", "está parpadeando", "esta parpadeando", "está apagada", "esta apagada", 
             "no prende", "enciende de dia", "prende y apaga", "está fundida", "esta fundida", 
-            "hace corto", "la lampara esta", "la luz esta", "está rota", "luminaria fundida, "luminaria apagada", "lampara apagada",
-            "la lampara esta", "las lamparas estan encendidas", "las luminarias estan prendidas"
+            "hace corto", "la lampara esta", "la luz esta", "está rota", "luminaria fundida", "las lamparas estan encendidas", "las luminarias estan prendidas"
         ];
         
         // Estado: Almacena temporalmente la ubicación para el reporte
@@ -469,19 +468,19 @@
 
                 if (response.ok && result.success) {
                     console.log('Reporte enviado a GitHub con éxito:', result.commit);
-                    appendMessage(`✅ **Confirmación de Guardado:** El reporte se ha guardado en tu repositorio de GitHub. ¡Trabajo hecho!`, 'bot');
+                    appendMessage(`✅ **Confirmación de Guardado:** El reporte se ha guardado y enviado a las oficinas de Alumbrado Publico. ¡Trabajo hecho!`, 'bot');
                     return true;
                 } else {
                     console.error('Error al guardar en el backend:', result.error || response.statusText);
                     // MENSAJE ALTERNATIVO EN CASO DE ERROR DEL BACKEND
-                    appendMessage(`⚠️ **Error de Guardado:** El servidor reportó un error (${result.error || response.statusText}). Revisa la consola o despliega el backend.`, 'bot');
+                    appendMessage(`⚠️ **Error de Guardado:** El servidor reportó un error (${result.error || response.statusText}).`, 'bot');
                     return false; 
                 }
 
             } catch (e) {
                 console.error('Error de red al conectar con la API:', e);
                 // MENSAJE ALTERNATIVO EN CASO DE FALLA DE CONEXIÓN
-                appendMessage(`⚠️ **Error de Conexión:** Falló la conexión al servidor de reportes (API no encontrada). El reporte solo se generó localmente.`, 'bot');
+                appendMessage(`⚠️ **Error de Conexión:** Falló la conexión al servidor de reportes. El reporte solo se generó localmente.`, 'bot');
                 return false;
             }
         }
@@ -552,11 +551,8 @@
                     const reportSummary = `
                         **✅ REPORTE GENERADO CON ÉXITO**
                         **Folio:** ${folio}
-                        
                         **Dirección:** ${direccion}
                         **Falla de la Luminaria:** ${descripcionFalla}
-                        
-                        **Ubicación GPS:** ${reportData.ubicacionGPS}
                         **Imagen:** ${file ? 'Sí' : 'No'}
                         
                         Tu reporte ha sido registrado. Conserva el **Folio ${folio}** para dar seguimiento. ¡El reporte se está enviando al servidor de procesamiento!
@@ -634,7 +630,7 @@
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Latitud: ${currentReportLocation.latitude.toFixed(5)}, Longitud: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
                         // MENSAJE ACTUALIZADO PARA SOLICITAR EL FORMATO DE LA COMA
-                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria parpadea**).`, 'bot');
+                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, y la luminaria parpadea**).`, 'bot');
                     },
                     (error) => {
                         currentReportLocation = { error: error.message || 'Error desconocido' };
@@ -673,4 +669,3 @@
 
 </body>
 </html>
-
