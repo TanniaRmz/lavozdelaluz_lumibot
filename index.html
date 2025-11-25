@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumi-Bot | Alumbrado Público</title>
+    
+    <link rel="icon" type="image/png" href="Aguascalientes.png"> 
+    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         /* --- ESTILOS CSS --- */
@@ -327,7 +330,7 @@
 
         const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
-        // --- OBJETO DE RESPUESTAS PERSONALIZADAS (Omitido para brevedad, asumiendo que no cambió) ---
+        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ---
         const RESPUESTAS = {
              "hola": {
                 "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
@@ -395,8 +398,6 @@
             // Guarda la conversación (actualmente desactivado)
         }
         
-        // ❌ FUNCIÓN getNextFolio ELIMINADA: EL SERVIDOR ASIGNA EL FOLIO.
-
         function appendMessage(text, sender, imageURL = null) {
             const time = getCurrentTime();
             const messageDiv = document.createElement('div');
@@ -465,12 +466,13 @@
         
         // =========================================================================================
         // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL
+        // El servidor asigna y devuelve el folio único.
         // =========================================================================================
 
         const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report'; 
 
         function sendReportToBackend(reportData) {
-            console.log("Enviando reporte al servidor:", reportData);
+            console.log("Enviando reporte al servidor para asignación de folio único:", reportData);
             
             appendMessage(`⌛ Procesando reporte... Guardando datos y asignando **Folio Único** en el sistema central.`, 'bot');
 
@@ -483,7 +485,6 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    // Si el servidor falla antes de asignar el folio, reportamos error.
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
@@ -591,7 +592,7 @@
                         };
                         
                         // Enlace corregido para Google Maps
-                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
+                        const mapLink = `http://maps.google.com/?q=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
@@ -631,7 +632,6 @@
         function loadConversation() {
             // Limpia la conversación anterior (si existiera)
             localStorage.removeItem(CHAT_STORAGE_KEY);
-            // ❌ YA NO ES NECESARIO LIMPIAR EL FOLIO DE localStorage
             chatBody.innerHTML = ''; 
         }
 
@@ -656,6 +656,5 @@
     </script>
 </body>
 </html>
-
 
 
