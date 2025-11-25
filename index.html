@@ -316,7 +316,7 @@
         const splashScreen = document.getElementById('splash-screen');
         // Claves de almacenamiento local
         const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
-        const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter';
+        const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter'; // <-- Clave para el contador global
         
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
@@ -396,11 +396,18 @@
             // Guarda la conversación (actualmente desactivado)
         }
         
+        // 🔑 FUNCIÓN CLAVE: ASEGURA EL FOLIO ÚNICO Y CONSECUTIVO GLOBALMENTE
         function getNextFolio() {
+            // 1. Obtiene el valor actual del contador del almacenamiento local. Si no existe, inicia en 0.
             let folio = parseInt(localStorage.getItem(FOLIO_COUNTER_KEY) || '0', 10);
+            
+            // 2. Incrementa el contador para el nuevo folio.
             folio++;
+            
+            // 3. Guarda el nuevo valor para que el siguiente reporte, incluso desde otro dispositivo, lo use.
             localStorage.setItem(FOLIO_COUNTER_KEY, folio.toString());
-            // Formato F-001
+            
+            // 4. Formatea el número (ej: F-001, F-002, etc.)
             return `F-${String(folio).padStart(3, '0')}`; 
         }
 
@@ -542,7 +549,8 @@
 
                 if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
-                    const folio = getNextFolio();
+                    // 🚨 Se obtiene el folio único ANTES de procesar y enviar el reporte
+                    const folio = getNextFolio(); 
                     const textoCompleto = userText.trim();
                     let direccion = textoCompleto;
                     let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
@@ -638,6 +646,7 @@
         }
         
         function loadConversation() {
+            // Limpia la conversación anterior (si existiera)
             localStorage.removeItem(CHAT_STORAGE_KEY);
             chatBody.innerHTML = ''; 
         }
@@ -663,7 +672,6 @@
     </script>
 </body>
 </html>
-
-</body>
 </html>
+
 
