@@ -314,9 +314,8 @@
         const userInput = document.getElementById('user-input');
         const fileInput = document.getElementById('file-input');
         const splashScreen = document.getElementById('splash-screen');
-        // Claves de almacenamiento local
+        // Clave de almacenamiento local, ya no se usa para el folio, solo para la conversación
         const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
-        const FOLIO_COUNTER_KEY = 'lumi-bot-folio-counter'; // <-- Clave para el contador global
         
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
@@ -328,9 +327,9 @@
 
         const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
-        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ---
+        // --- OBJETO DE RESPUESTAS PERSONALIZADAS (Omitido para brevedad, asumiendo que no cambió) ---
         const RESPUESTAS = {
-            "hola": {
+             "hola": {
                 "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
                 "respuesta": "¡Hola! Soy **Lumi-Bot**, tu asistente para Alumbrado Público. ¿En qué puedo ayudarte hoy?"
             },
@@ -396,20 +395,7 @@
             // Guarda la conversación (actualmente desactivado)
         }
         
-        // 🔑 FUNCIÓN CLAVE: ASEGURA EL FOLIO ÚNICO Y CONSECUTIVO GLOBALMENTE
-        function getNextFolio() {
-            // 1. Obtiene el valor actual del contador del almacenamiento local. Si no existe, inicia en 0.
-            let folio = parseInt(localStorage.getItem(FOLIO_COUNTER_KEY) || '0', 10);
-            
-            // 2. Incrementa el contador para el nuevo folio.
-            folio++;
-            
-            // 3. Guarda el nuevo valor para que el siguiente reporte, incluso desde otro dispositivo, lo use.
-            localStorage.setItem(FOLIO_COUNTER_KEY, folio.toString());
-            
-            // 4. Formatea el número: F-0001 (4 dígitos)
-            return `F-${String(folio).padStart(4, '0')}`; // <-- CAMBIO AQUÍ: padStart(4, '0')
-        }
+        // ❌ FUNCIÓN getNextFolio ELIMINADA: EL SERVIDOR ASIGNA EL FOLIO.
 
         function appendMessage(text, sender, imageURL = null) {
             const time = getCurrentTime();
@@ -478,16 +464,15 @@
         }
         
         // =========================================================================================
-        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL (PARA GUARDAR EN GITHUB)
+        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL
         // =========================================================================================
 
-        // 🟢 URL CORREGIDA: Usando tu dominio conocido + el endpoint /api/report
         const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report'; 
 
         function sendReportToBackend(reportData) {
             console.log("Enviando reporte al servidor:", reportData);
             
-            appendMessage(`⌛ Procesando reporte... Guardando datos en el sistema.`, 'bot');
+            appendMessage(`⌛ Procesando reporte... Guardando datos y asignando **Folio Único** en el sistema central.`, 'bot');
 
             fetch(API_URL, {
                 method: 'POST',
@@ -497,32 +482,31 @@
                 body: JSON.stringify(reportData)
             })
             .then(response => {
-                // Si la respuesta no es 2xx, lanza un error para ir al .catch
                 if (!response.ok) {
+                    // Si el servidor falla antes de asignar el folio, reportamos error.
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                // IMPORTANTE: El backend DEBE responder con { success: true }
-                if (data.success) { 
+                // ✅ CLAVE: El servidor debe devolver el folio generado (data.folio)
+                if (data.success && data.folio) { 
                     const reportSummary = `
                         **✅ REPORTE GENERADO CON ÉXITO**
-                        **Folio:** ${reportData.folio}
+                        **Folio:** ${data.folio}
                         **Dirección:** ${reportData.direccion}
                         **Falla de la Luminaria:** ${reportData.descripcion_falla}        
-                        Tu reporte ha sido registrado y está en manos de la oficina. Conserva el **Folio ${reportData.folio}** para dar seguimiento.
+                        Tu reporte ha sido registrado. Conserva el **Folio ${data.folio}** para dar seguimiento.
                     `;
                     appendMessage(reportSummary, 'bot');
                 } else {
-                    // Si el servidor responde pero indica fallo interno (ej: GitHub rechaza el commit)
-                    appendMessage(`⚠️ **Fallo en el Sistema de Registro (Folio ${reportData.folio}):** El servidor respondió con un error interno. Intenta más tarde o llama al 072.`, 'bot');
+                    // Si el servidor responde pero indica fallo interno 
+                    appendMessage(`⚠️ **Fallo en el Sistema de Registro:** El servidor no pudo asignar el folio. Intenta más tarde o llama al 072.`, 'bot');
                 }
             })
             .catch(error => {
-                // Manejar errores de red o errores HTTP lanzados
                 console.error('Error de fetch o de la API:', error);
-                appendMessage(`❌ **Error de red o del servidor (Folio ${reportData.folio}):** No se pudo contactar al sistema. Si tu reporte se guardó, espera el resumen. De lo contrario, llama al 072.`, 'bot');
+                appendMessage(`❌ **Error de red o del servidor:** No se pudo contactar al sistema central. Llama al 072.`, 'bot');
             });
         }
 
@@ -549,8 +533,7 @@
 
                 if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
-                    // 🚨 Se obtiene el folio único ANTES de procesar y enviar el reporte
-                    const folio = getNextFolio(); 
+                    // ❌ EL FOLIO YA NO SE CALCULA AQUÍ
                     const textoCompleto = userText.trim();
                     let direccion = textoCompleto;
                     let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
@@ -566,7 +549,7 @@
                         `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
 
                     const reportData = {
-                        folio: folio,
+                        // ❌ EL CAMPO 'folio' YA NO SE ENVÍA. EL SERVIDOR LO ASIGNARÁ.
                         fecha: new Date().toLocaleString(),
                         direccion: direccion,
                         descripcion_falla: descripcionFalla,
@@ -648,6 +631,7 @@
         function loadConversation() {
             // Limpia la conversación anterior (si existiera)
             localStorage.removeItem(CHAT_STORAGE_KEY);
+            // ❌ YA NO ES NECESARIO LIMPIAR EL FOLIO DE localStorage
             chatBody.innerHTML = ''; 
         }
 
@@ -672,5 +656,6 @@
     </script>
 </body>
 </html>
+
 
 
