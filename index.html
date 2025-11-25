@@ -407,8 +407,8 @@
             // 3. Guarda el nuevo valor para que el siguiente reporte, incluso desde otro dispositivo, lo use.
             localStorage.setItem(FOLIO_COUNTER_KEY, folio.toString());
             
-            // 4. Formatea el número (ej: F-001, F-002, etc.)
-            return `F-${String(folio).padStart(3, '0')}`; 
+            // 4. Formatea el número: F-0001 (4 dígitos)
+            return `F-${String(folio).padStart(4, '0')}`; // <-- CAMBIO AQUÍ: padStart(4, '0')
         }
 
         function appendMessage(text, sender, imageURL = null) {
@@ -671,7 +671,6 @@
 
     </script>
 </body>
-</html>
 </html>
 
 
