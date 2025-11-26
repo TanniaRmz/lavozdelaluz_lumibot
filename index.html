@@ -325,59 +325,139 @@
         const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
         const RESPUESTAS = {
-             "hola": {
-                "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
-                "respuesta": "¡Hola! Soy **Lumi-Bot**, tu asistente para Alumbrado Público. ¿En qué puedo ayudarte hoy?"
-            },
-            "quién eres": {
-                "variantes": ["quién eres", "quien eres", "qué eres", "que eres"],
-                "respuesta": "Soy un Chat-Bot diseñado para darte información y ayudarte a gestionar reportes del área de Alumbrado Público. **¡Mi misión es que tu calle brille!**"
-            },
-            "qué haces": {
-                "variantes": ["qué haces", "que haces", "a qué te dedicas"],
-                "respuesta": "Puedo responder dudas sobre reportes, servicios y horarios. Si quieres reportar una falla puedes escribir **'Reportar'** o si quieres saber del estado de tu reporte escribe **'Seguimiento'**."
-            },
-            "reportar": {
-                "variantes": ["cómo reporto una falla", "como reporto una falla", "quiero reportar una falla", "reportar", "reporte rapido"],
-                "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **Dirección exacta Y LA DESCRIPCIÓN DE LA FALLA SEPARADA POR UNA COMA** (ej: calle X, luminaria parpadea). Puedes adjuntar una **foto** (opcional)."
-            },
-            "horario": {
-                "variantes": ["cuál es tu horario", "cual es tu horario", "horario de atención", "horario", "cual es el horario de alumbrado publico", "cual es el horario"],
-                "respuesta": "El horario de atención de Alumbardo Publico es de **Lunes a Domingo** y circulamos las **24 horas**."
-            },
-            "estado de reporte": {
-                "variantes": ["reportes", "quiero saber de mi reporte", "seguimiento", "estado de mi reporte"],
-                "respuesta": "INICIAR SEGUIMIENTO: <br>Perfecto, voy a buscar tu reporte. Por favor, indícame tu **número de folio** o la **dirección exacta** que reportaste."
-            },
-            "gracias": { "variantes": ["gracias", "muchas gracias"], "respuesta": "¡De nada! Es un placer iluminar tu camino. " },
-            "numero": { "variantes": ["numero", "cual es el numero"], "respuesta": "El número oficial para reportes es el **072**. ¡Guárdalo! O si tienes problemas puedes llamar también a este número **449 910 1019**." },
-            
-            "link": {
-                "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
-                "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n** https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/ **\nEste link te facilitará más la gestión de reportes."
-            },
-            "lamparas nuevas": {
-                "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
-                "respuesta": "Constantemente estamos actualizando la infraestructura. Para solicitar la **instalación de nuevas luminarias** o un **cambio de tecnología**, es necesario comunicarte al **072** para evaluar la viabilidad del proyecto en tu zona."
-            },
-            "significado de alumbrado publico": {
-                "variantes": ["significado de alumbrado publico", "que es alumbrado publico", "que significa alumbrado", "definicion"],
-                "respuesta": "El **Alumbrado Público** es el servicio que busca iluminar las vías de circulación y los espacios públicos. Su propósito es proporcionar **seguridad**, **visibilidad** y **mejorar la calidad de vida** de los ciudadanos durante la noche."
-            },
-            "lampara caida": {
-                "variantes": ["lampara caida", "poste caido", "luminaria tirada", "columna rota", "peligro"],
-                "respuesta": "🚨 **¡ATENCIÓN, PELIGRO!** Si una lámpara, poste o luminaria está caída, representa un riesgo eléctrico y físico. Por favor, llama inmediatamente al número de **Emergencias (911)** y notifica también al **072** para que sea atendida con máxima prioridad."
-            },
-            "fotoceldas": {
-                "variantes": ["fotoceldas", "foto celda", "porque se prende de dia", "se prende de dia"],
-                "respuesta": "Las luminarias son controladas por **fotoceldas**, que son sensores de luz. Si una lámpara enciende de día, la fotocelda probablemente está fallando. Este es un reporte común; por favor, usa **'Reportar'** para indicarnos la dirección y corregir el problema."
-            },
-            "colores de las lamparas": {
-                "variantes": ["colores de las lamparas", "luz amarilla", "luz blanca", "tipo de lampara"],
-                "respuesta": "En Aguascalientes usamos principalmente tecnología **LED (luz blanca/fría)** por su eficiencia energética. Anteriormente se usaba **Vapor de Sodio (luz amarilla)**. Si detectas un cambio de color abrupto o intermitente, podría ser señal de una falla que requiere reparación."
-            }
-        };
-
+    // --- RESPUESTAS ORIGINALES ---
+    "hola": {
+        "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
+        "respuesta": "¡Hola! Soy **Lumi-Bot**, tu asistente para Alumbrado Público. ¿En qué puedo ayudarte hoy?"
+    },
+    "quién eres": {
+        "variantes": ["quién eres", "quien eres", "qué eres", "que eres"],
+        "respuesta": "Soy un Chat-Bot diseñado para darte información y ayudarte a gestionar reportes del área de Alumbrado Público. **¡Mi misión es que tu calle brille!**"
+    },
+    "qué haces": {
+        "variantes": ["qué haces", "que haces", "a qué te dedicas"],
+        "respuesta": "Puedo responder dudas sobre reportes, servicios y horarios. Si quieres reportar una falla puedes escribir **'Reportar'** o si quieres saber del estado de tu reporte escribe **'Seguimiento'**."
+    },
+    "reportar": {
+        "variantes": ["cómo reporto una falla", "como reporto una falla", "quiero reportar una falla", "reportar", "reporte rapido"],
+        "respuesta": "¡Entendido! Vamos a generar un **Reporte Rápido**. Primero, necesito tu ubicación. El sistema ha solicitado permiso para usar tu GPS. Por favor, **acepta la solicitud de ubicación** que aparece en tu navegador.\n\nSi ya lo hiciste, por favor, envía un mensaje con la **Dirección exacta Y LA DESCRIPCIÓN DE LA FALLA SEPARADA POR UNA COMA** (ej: calle X, luminaria parpadea). Puedes adjuntar una **foto** (opcional)."
+    },
+    "horario": {
+        "variantes": ["cuál es tu horario", "cual es tu horario", "horario de atención", "horario", "cual es el horario de alumbrado publico", "cual es el horario"],
+        "respuesta": "El horario de atención de Alumbardo Publico es de **Lunes a Domingo** y circulamos las **24 horas**."
+    },
+    "estado de reporte": {
+        "variantes": ["reportes", "quiero saber de mi reporte", "seguimiento", "estado de mi reporte"],
+        "respuesta": "INICIAR SEGUIMIENTO: <br>Perfecto, voy a buscar tu reporte. Por favor, indícame tu **número de folio** o la **dirección exacta** que reportaste."
+    },
+    "gracias": { "variantes": ["gracias", "muchas gracias"], "respuesta": "¡De nada! Es un placer iluminar tu camino. " },
+    "numero": { "variantes": ["numero", "cual es el numero"], "respuesta": "El número oficial para reportes es el **072**. ¡Guárdalo! O si tienes problemas puedes llamar también a este número **449 910 1019**." },
+    "link": {
+        "variantes": ["link", "enlace", "formulario", "pagina web", "reporte detallado"],
+        "respuesta": "Si quieres hacer un reporte más detallado entra al siguiente enlace: \n** https://jonemoto24.github.io/Alumbrado-publico-de-Aguascalientes/ **\nEste link te facilitará más la gestión de reportes."
+    },
+    "lamparas nuevas": {
+        "variantes": ["lamparas nuevas", "nuevas lamparas", "instalacion", "cambio de luz"],
+        "respuesta": "Constantemente estamos actualizando la infraestructura. Para solicitar la **instalación de nuevas luminarias** o un **cambio de tecnología**, es necesario comunicarte al **072** para evaluar la viabilidad del proyecto en tu zona."
+    },
+    "significado de alumbrado publico": {
+        "variantes": ["significado de alumbrado publico", "que es alumbrado publico", "que significa alumbrado", "definicion"],
+        "respuesta": "El **Alumbrado Público** es el servicio que busca iluminar las vías de circulación y los espacios públicos. Su propósito es proporcionar **seguridad**, **visibilidad** y **mejorar la calidad de vida** de los ciudadanos durante la noche."
+    },
+    "lampara caida": {
+        "variantes": ["lampara caida", "poste caido", "luminaria tirada", "columna rota", "peligro"],
+        "respuesta": "🚨 **¡ATENCIÓN, PELIGRO!** Si una lámpara, poste o luminaria está caída, representa un riesgo eléctrico y físico. Por favor, llama inmediatamente al número de **Emergencias (911)** y notifica también al **072** para que sea atendida con máxima prioridad."
+    },
+    "fotoceldas": {
+        "variantes": ["fotoceldas", "foto celda", "porque se prende de dia", "se prende de dia"],
+        "respuesta": "Las luminarias son controladas por **fotoceldas**, que son sensores de luz. Si una lámpara enciende de día, la fotocelda probablemente está fallando. Este es un reporte común; por favor, usa **'Reportar'** para indicarnos la dirección y corregir el problema."
+    },
+    "colores de las lamparas": {
+        "variantes": ["colores de las lamparas", "luz amarilla", "luz blanca", "tipo de lampara"],
+        "respuesta": "En Aguascalientes usamos principalmente tecnología **LED (luz blanca/fría)** por su eficiencia energética. Anteriormente se usaba **Vapor de Sodio (luz amarilla)**. Si detectas un cambio de color abrupto o intermitente, podría ser señal de una falla que requiere reparación."
+    },
+    
+    "trabajan en días festivos": {
+        "variantes": ["trabajan en días festivos", "trabajan días festivos", "¿hay servicio en días festivos?"],
+        "respuesta": "Sí, el personal de **Alumbrado Público opera las 24 horas del día, los 7 días de la semana**, incluyendo días festivos y fines de semana, especialmente para atender fallas críticas o reportes de peligro."
+    },
+    "quitar tenis colgados": {
+        "variantes": ["quitar tenis colgados de las lámparas", "quiten los zapatos colgados", "tenis colgados de los cables", "quitar tenis colgados de los postes"],
+        "respuesta": "El retiro de objetos colgados en el cableado o las luminarias (como tenis o zapatos) es una labor que debe realizarse con equipo especializado. Por favor, reporta la ubicación exacta al **072** para que el personal de mantenimiento programe su retiro."
+    },
+    "ir directamente a oficinas": {
+        "variantes": ["puedo ir directamente a las oficinas a reclamar", "ir a la oficina a quejarme", "dirección de oficinas de alumbrado"],
+        "respuesta": "Sí, puedes acudir a las oficinas de atención ciudadana para levantar un reporte o dar seguimiento. Sin embargo, te recomendamos usar el **teléfono 072** o el **chatbot** para un trámite más rápido y directo."
+    },
+    "quién fundó el alumbrado público": {
+        "variantes": ["quién fundó el alumbrado público", "quien inventó el alumbrado", "historia del alumbrado"],
+        "respuesta": "El concepto de alumbrado público evolucionó con la historia. El **alumbrado moderno y eléctrico** (con bombillas incandescentes o LED) no tiene un único fundador, sino que se atribuye a la implementación de tecnología de figuras como **Thomas Edison** y sistemas municipales en las grandes ciudades a finales del siglo XIX."
+    },
+    "por qué nunca vienen a villas": {
+        "variantes": ["por qué los de alumbrado nunca vienen a villas", "no atienden mi colonia", "tardan mucho en mi zona"],
+        "respuesta": "El servicio de Alumbrado Público cubre todas las zonas del municipio. La asignación de cuadrillas se basa en la **prioridad y la concentración de reportes**. Si sientes que hay un retraso en tu zona, llama al **072** o envía tu reporte detallado para asegurar que tu solicitud esté bien registrada."
+    },
+    "venir hoy mismo a arreglar": {
+        "variantes": ["pueden venir hoy mismo a arreglar la lámpara", "arreglo inmediato"],
+        "respuesta": "Los reportes se atienden en un lapso de **24 a 72 horas hábiles**. Las fallas que involucran peligro (poste caído, corto circuito) se atienden con **máxima prioridad** y de forma inmediata si es posible, pero las fallas comunes siguen la programación regular."
+    },
+    "lámpara se cae ustedes la pueden arreglar": {
+        "variantes": ["si la lámpara se cae, ustedes mismos la pueden arreglar", "poste chocado", "reparar columna"],
+        "respuesta": "Sí, la cuadrilla de Alumbrado Público está capacitada para atender y reparar la caída de luminarias y postes. Recuerda que, si hay peligro inminente (cables sueltos), debes llamar primero al **911**."
+    },
+    "me puedo robar la lámpara": {
+        "variantes": ["me puedo robar la lámpara", "robar faro", "robo de luminaria"],
+        "respuesta": "❌ **¡ADVERTENCIA!** El robo, daño o manipulación de la infraestructura de alumbrado público es un **delito federal** que conlleva severas multas y penas de prisión. La luminaria pertenece al municipio."
+    },
+    "qué pasa si me robó la lámpara caída": {
+        "variantes": ["qué pasa si me robó la lámpara caída", "robar poste tirado"],
+        "respuesta": "Aún si la lámpara está caída, sigue siendo propiedad municipal y contiene componentes eléctricos valiosos. Robarla o llevártela es un **delito de robo de infraestructura pública** y puede implicar riesgo de electrocución. Por favor, **repórtala al 911/072** para que sea retirada de forma segura."
+    },
+    "vinculados al CFE": {
+        "variantes": ["están vinculados al CFE", "trabajan con CFE"],
+        "respuesta": "El servicio de Alumbrado Público es administrado por el **Gobierno Municipal**. Aunque CFE es nuestro proveedor de energía y trabajamos en coordinación en ciertas áreas de infraestructura eléctrica, la **responsabilidad del mantenimiento y la reparación de las luminarias es totalmente municipal**."
+    },
+    "diferencias alumbrado y CFE": {
+        "variantes": ["en qué se diferencian el alumbrado público y el CFE", "diferencia CFE y alumbrado"],
+        "respuesta": "**CFE** es la empresa federal encargada de generar, distribuir y comercializar la **energía eléctrica** a los hogares y negocios. El **Alumbrado Público (Municipal)** es la dependencia que se encarga exclusivamente del **mantenimiento, reparación y expansión de las luminarias** en calles, parques y espacios públicos."
+    },
+    "poner luces a mi pino": {
+        "variantes": ["pueden venir a ponerle las luces a mi pino", "decoración de navidad"],
+        "respuesta": "No, el servicio de Alumbrado Público se enfoca exclusivamente en la infraestructura de seguridad y vialidad. No podemos ayudarte con la **instalación de luces decorativas** o privadas en tu domicilio o pino navideño."
+    },
+    "por qué rompieron la calle": {
+        "variantes": ["por qué rompieron la calle si venían a arreglar la lámpara", "abrieron pavimento"],
+        "respuesta": "En ocasiones, la falla de una luminaria está en el **cableado subterráneo** o en la base del poste. Es necesario abrir una pequeña zanja en el pavimento para acceder y realizar la reparación, asegurando que la conexión sea duradera. El área debe ser reparada por la misma cuadrilla de obra al finalizar el trabajo."
+    },
+    "por qué hacen un tiradero": {
+        "variantes": ["por qué hacen un tiradero cuando ni siquiera trabajan", "dejan basura", "no recogen escombros"],
+        "respuesta": "Nuestro protocolo exige que se deje el área de trabajo limpia y segura. Si una cuadrilla dejó escombros o materiales, por favor, **reporta la ubicación al 072** para que se envíe una cuadrilla de limpieza inmediatamente."
+    },
+    "por qué hay tanto cable en los postes": {
+        "variantes": ["por qué hay tanto cable en los postes", "exceso de cables"],
+        "respuesta": "Los postes son compartidos por múltiples servicios (luz eléctrica, telefonía, internet, televisión por cable). El **Alumbrado Público** usa solo un pequeño porcentaje de esos cables. La regulación del resto de la infraestructura corresponde a otras dependencias o empresas privadas."
+    },
+    "quien dirige el alumbrado público": {
+        "variantes": ["quien dirige el alumbrado público", "director de alumbrado"],
+        "respuesta": "El área de Alumbrado Público está bajo la dirección de la **Secretaría de Servicios Públicos Municipales** de Aguascalientes."
+    },
+    "número para hablar con humano": {
+        "variantes": ["hay algún número de teléfono para marcar directamente a alguien humano", "teléfono humano"],
+        "respuesta": "Sí, el número oficial **072** está operado por personal humano y funciona las 24 horas del día para canalizar tus reportes o dudas de forma verbal. También puedes marcar al **449 910 1019**."
+    },
+    "pago para la luz": {
+        "variantes": ["aquí puedo hacer el pago para la luz", "pago recibo luz", "pagar electricidad"],
+        "respuesta": "No, el **Lumi-Bot** no gestiona pagos. El pago del servicio de luz de tu casa debe realizarse directamente ante la **CFE**."
+    },
+    "pasar la luz de la lámpara a mi casa": {
+        "variantes": ["me pueden pasar la luz de la lámpara a mi casa", "tomar luz de poste", "robar luz de calle"],
+        "respuesta": "❌ **¡TERMINANTEMENTE PROHIBIDO!** Conectarse ilegalmente a la red de alumbrado público (el 'diablito') es un **delito de alto riesgo** que pone en peligro a tu familia y causa serios daños al sistema eléctrico municipal. **Por favor, no lo hagas**."
+    },
+    "volver a poner la luz de mi casa": {
+        "variantes": ["me pueden volver a poner la luz de mi casa", "me la cortaron la luz", "reconexión de luz"],
+        "respuesta": "Esa solicitud debe hacerse directamente a la **CFE** (Comisión Federal de Electricidad). Ellos son los únicos responsables de reconectar, cortar o modificar el servicio eléctrico en domicilios particulares. Llama a su línea de atención al cliente."
+    }
+};
         // --- FUNCIONES DE UTILIDAD ---
         
         function getCurrentTime() {
@@ -717,6 +797,7 @@
     </script>
 </body>
 </html>
+
 
 
 
