@@ -9,9 +9,8 @@
     
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        /* --- ESTILOS CSS --- */
+        /* --- ESTILOS CSS (SIN CAMBIOS) --- */
         
-        /* === FONDO EXTERIOR (BODY) === */
         body {
             font-family: Arial, sans-serif;
             background-image: url('Fondo animado.avif'); 
@@ -26,7 +25,6 @@
             overflow: hidden; 
         }
 
-        /* === PANTALLA DE CARGA (SPLASH SCREEN) === */
         #splash-screen {
             position: fixed;
             top: 0;
@@ -71,7 +69,6 @@
             }
         }
         
-        /* === CONTENEDOR DEL CHAT (CHAT CONTAINER) === */
         .chat-container {
             width: 100%;
             max-width: 420px;
@@ -88,7 +85,6 @@
             transition: opacity 0.5s ease-in;
         }
 
-        /* === ESTILOS DEL CHAT (RESTO) === */
         .chat-header {
             background-color: #128c7e;
             color: white;
@@ -127,17 +123,15 @@
             opacity: 0.8;
         }
 
-        /* 🎨 RESTAURACIÓN DE FONDO DE CHAT CON MAYOR OPACIDAD DE FONDO BASE */
         .chat-body {
             flex-grow: 1;
             padding: 10px;
             overflow-y: auto;
-            /* TU IMAGEN DE FONDO */
             background-image: url('Luminarias aguascalientes.jpeg'); 
             background-size: cover; 
             background-position: center; 
-            background-color: rgba(229, 221, 213, 0.7); /* Color base claro con 70% de opacidad para la imagen de fondo */
-            background-blend-mode: color; /* Mezcla el color base con la imagen para aclararla */
+            background-color: rgba(229, 221, 213, 0.7); 
+            background-blend-mode: color; 
             display: flex;
             flex-direction: column;
         }
@@ -321,15 +315,15 @@
         
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
 
-        // Estado: Almacena temporalmente la ubicación para el reporte
         let currentReportLocation = null;
+        let waitingForFolio = false; 
         
-        // Estado: Indica si el bot está esperando el folio o la dirección del usuario
-        let waitingForFolio = false;
+        // ESTADOS ACTUALIZADOS: 'none', 'name', 'phone', 'address'
+        let waitingFor = 'none'; 
+        let reportDataBuffer = {}; // Buffer temporal para datos del reporte
 
         const DETAILED_STATUS_MESSAGE = "Estamos dándole seguimiento a todas las solicitudes. Actualmente, tu reporte se encuentra en estado de **Verificación en Campo** o **Reparación Activa**.\n\nRecuerda que si ves una 'X' con cinta negra en la base, significa que fue **diagnosticada** y está en la lista de reparaciones prioritarias. ¡El tiempo de atención es de 24 a 72 horas hábiles!";
 
-        // --- OBJETO DE RESPUESTAS PERSONALIZADAS ---
         const RESPUESTAS = {
              "hola": {
                 "variantes": ["hola", "holaaaa", "olis", "oli", "ola", "wenas", "buenos días", "buenas tardes"],
@@ -464,7 +458,7 @@
         }
         
         // =========================================================================================
-        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL (AHORA MANEJA IMAGEN)
+        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL
         // =========================================================================================
 
         const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report'; 
@@ -497,8 +491,8 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        reportData: reportData, // Datos del reporte
-                        imageData: imageData   // Datos de la imagen (base64 y tipo)
+                        reportData: reportData, 
+                        imageData: imageData   
                     })
                 });
 
@@ -508,13 +502,16 @@
                 
                 const data = await response.json();
 
-                // ✅ CLAVE: El servidor debe devolver el folio generado (data.folio)
                 if (data.success && data.folio) { 
+                    
                     let reportSummary = `
                         **✅ REPORTE GENERADO CON ÉXITO**
+                        
                         **Folio:** ${data.folio}
+                        **Nombre de quien reporta:** ${reportData.nombre}
+                        **Número de contacto:** ${reportData.numero}
                         **Dirección:** ${reportData.direccion}
-                        **Falla de la Luminaria:** ${reportData.descripcion_falla}        
+                        **Falla:** ${reportData.descripcion_falla}        
                     `;
                     
                     if (data.imageUrl && data.imageUrl !== 'No') {
@@ -529,7 +526,6 @@
 
                     appendMessage(reportSummary, 'bot');
                 } else {
-                    // Si el servidor responde pero indica fallo interno 
                     appendMessage(`⚠️ **Fallo en el Sistema de Registro:** El servidor no pudo asignar el folio. Intenta más tarde o llama al 072.`, 'bot');
                 }
             } catch (error) {
@@ -538,71 +534,106 @@
             }
         }
 
-        // --- LÓGICA DE ENVÍO Y REPORTE ---
+        // --- LÓGICA DE ENVÍO Y REPORTE GUIADO ---
 
         async function sendMessage() {
             const userText = userInput.value.trim();
             const file = fileInput.files[0];
-            let imageURL_Local = null; // URL local para mostrar en el chat
-            let imageData_Server = null; // Datos Base64 para enviar al servidor
-
-            if (!userText && !file) {
+            let imageURL_Local = null; 
+            
+            if (!userText && !file && waitingFor === 'none') {
                 return;
             }
             
-            // 1. Si hay archivo, leerlo y preparar datos
             if (file) {
                 imageURL_Local = URL.createObjectURL(file);
-                imageData_Server = await readFileAsBase64(file);
+                const imageData_Server = await readFileAsBase64(file);
+                reportDataBuffer.imageData = imageData_Server; // Guarda la imagen en el buffer
             }
 
             const messageToSend = userText || '[Imagen de Reporte Adjunta]';
-            appendMessage(messageToSend, 'user', imageURL_Local);
-
-            if (userText || file) {
-                const textToProcess = userText || "quiero reportar una falla";
-
-                if (currentReportLocation !== undefined && currentReportLocation !== null) {
-                    
-                    const textoCompleto = userText.trim();
-                    let direccion = textoCompleto;
-                    let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
-                    
-                    const firstCommaIndex = textoCompleto.indexOf(',');
-
-                    if (firstCommaIndex !== -1) {
-                        direccion = textoCompleto.substring(0, firstCommaIndex).trim();
-                        descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
-                    } 
-
-                    const gpsString = currentReportLocation.latitude ? 
-                        `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
-
-                    const reportData = {
-                        // El campo 'folio' ya NO se envía. EL SERVIDOR LO ASIGNARÁ.
-                        fecha: new Date().toLocaleString(),
-                        direccion: direccion,
-                        descripcion_falla: descripcionFalla,
-                        ubicacionGPS: gpsString,
-                        // El campo 'imagenURL' se envía como placeholder 'Pendiente'
-                        // y el servidor lo actualizará con el URL de GitHub o 'No'
-                        imagenURL: file ? 'Pendiente' : 'No', 
-                        estado: 'Reportado'
-                    };
-
-                    // 2. Llamar a la función de reporte con ambos paquetes de datos
-                    sendReportToBackend(reportData, imageData_Server); 
-
-                    currentReportLocation = undefined;
-                    fileInput.value = ''; 
-
-                } else {
-                    processUserMessage(textToProcess);
-                }
+            // Solo muestra el mensaje del usuario si hay texto o se está en modo conversación normal
+            if (waitingFor === 'none' || userText) {
+                appendMessage(messageToSend, 'user', imageURL_Local);
             }
-
+            
             userInput.value = '';
             fileInput.value = '';
+            
+            // --- FLUJO DE REPORTE GUIADO (3 PASOS) ---
+
+            if (waitingFor === 'name') {
+                // PASO 1: Recibir el nombre
+                reportDataBuffer.nombre = userText || 'Anónimo';
+                waitingFor = 'phone'; 
+                
+                appendMessage(`¡Gracias, **${reportDataBuffer.nombre}**!`, 'bot');
+                appendMessage("Ahora, por favor, ingresa tu **número de teléfono** de contacto (ej: 4491234567).", 'bot');
+                return;
+            }
+
+            if (waitingFor === 'phone') {
+                // PASO 2: Recibir el teléfono
+                reportDataBuffer.numero = userText || 'No proporcionado';
+                waitingFor = 'address'; // Pasa al siguiente estado: Dirección
+                
+                requestLocation(); // Llama a la función que pide la ubicación GPS y la dirección/falla
+                return;
+            }
+
+
+            if (waitingFor === 'address') {
+                // PASO 3: Recibir la dirección y descripción de la falla y ENVIAR EL REPORTE
+                
+                if (!currentReportLocation || !userText) {
+                    appendMessage("⚠️ Por favor, ingresa la **Dirección exacta Y la DESCRIPCIÓN DE LA FALLA** separadas por una coma. (ej: Calle 5, la luminaria parpadea).", 'bot');
+                    return;
+                }
+
+                const textoCompleto = userText.trim();
+                let direccion = textoCompleto;
+                let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
+                
+                const firstCommaIndex = textoCompleto.indexOf(',');
+
+                if (firstCommaIndex !== -1) {
+                    direccion = textoCompleto.substring(0, firstCommaIndex).trim();
+                    descripcionFalla = textoCompleto.substring(firstCommaIndex + 1).trim();
+                } 
+                
+                // Preparar los datos finales del reporte
+                const gpsString = currentReportLocation.latitude ? 
+                    `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
+
+                const reportData = {
+                    nombre: reportDataBuffer.nombre,
+                    numero: reportDataBuffer.numero, // Nuevo campo
+                    fecha: new Date().toLocaleString(),
+                    direccion: direccion,
+                    descripcion_falla: descripcionFalla,
+                    ubicacionGPS: gpsString,
+                    imagenURL: reportDataBuffer.imageData ? 'Pendiente' : 'No', 
+                    estado: 'Reportado'
+                };
+
+                // ENVÍO FINAL
+                sendReportToBackend(reportData, reportDataBuffer.imageData); 
+
+                // Resetear estados
+                waitingFor = 'none';
+                currentReportLocation = undefined;
+                reportDataBuffer = {}; 
+                
+                return;
+            }
+            
+            // --- LÓGICA DE CONVERSACIÓN NORMAL (Si waitingFor === 'none') ---
+            
+            if (userText) {
+                processUserMessage(userText);
+            } else if (file) {
+                appendMessage("Solo recibí una imagen. Para reportar una falla, escribe **'Reportar'** o usa el botón rojo 💡.", 'bot');
+            }
         }
 
         function handleKeyPress(e) {
@@ -623,12 +654,11 @@
                             longitude: position.coords.longitude
                         };
                         
-                        // Enlace corregido para Google Maps
                         const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
-                        appendMessage(`Ahora, por favor, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria está apagada**).`, 'bot');
+                        appendMessage(`Casi terminamos. Ahora, escribe la **dirección exacta SEGUIDA DE UNA COMA y la falla** (ej: **Calle 5, la luminaria está apagada**).`, 'bot');
                         
                     },
                     (error) => {
@@ -650,9 +680,9 @@
         }
 
         function startQuickReport() {
-             const reportMessage = RESPUESTAS["reportar"].respuesta;
-             appendMessage(reportMessage, 'bot');
-             requestLocation();
+             waitingFor = 'name'; // INICIA el proceso pidiendo el nombre
+             reportDataBuffer = {}; // Limpia el buffer
+             appendMessage("¡Entendido! Vamos a generar tu **Reporte Rápido**.<br>Primero, ¿Cuál es tu **nombre completo**? (Opcional, si prefieres mantener tu anonimato, solo escribe 'Anónimo').", 'bot');
         }
 
         function sendBotInitialMessage() {
@@ -662,7 +692,6 @@
         }
         
         function loadConversation() {
-            // Limpia la conversación anterior (si existiera)
             localStorage.removeItem(CHAT_STORAGE_KEY);
             chatBody.innerHTML = ''; 
         }
