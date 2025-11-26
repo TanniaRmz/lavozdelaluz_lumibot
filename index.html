@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumi-Bot | Alumbrado Público</title>
     
-    <link rel="icon" type="image/png" href="Logo alumbrado publico cute.jpg"> 
+    <link rel="icon" type="image/png" href="Aguascalientes.png"> 
     
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -317,7 +317,6 @@
         const userInput = document.getElementById('user-input');
         const fileInput = document.getElementById('file-input');
         const splashScreen = document.getElementById('splash-screen');
-        // Clave de almacenamiento local, ya no se usa para el folio, solo para la conversación
         const CHAT_STORAGE_KEY = 'lumi-bot-conversation';
         
         const DEFAULT_RESPONSE = "Lo siento, esa pregunta es nueva para mí. Intenta con **'hola'**, **'reportar'** o **'horario'** para guiarte.";
@@ -465,76 +464,106 @@
         }
         
         // =========================================================================================
-        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL
-        // El servidor asigna y devuelve el folio único.
+        // 💾 FUNCIÓN DE ENVÍO DE REPORTE A API DE VERCEL (AHORA MANEJA IMAGEN)
         // =========================================================================================
 
         const API_URL = 'https://lavozdelaluz-lumibot.vercel.app/api/report'; 
+        
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    resolve(null);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.readAsDataURL(file); // Lee el archivo como base64
+                reader.onload = () => resolve({
+                    base64: reader.result, // Data URL (incluye prefijo: data:image/png;base64,...)
+                    fileType: file.type
+                });
+                reader.onerror = error => reject(error);
+            });
+        }
 
-        function sendReportToBackend(reportData) {
-            console.log("Enviando reporte al servidor para asignación de folio único:", reportData);
+        async function sendReportToBackend(reportData, imageData) {
+            console.log("Enviando reporte al servidor para asignación de folio único y subida de imagen...");
             
             appendMessage(`⌛ Procesando reporte... Guardando datos y asignando **Folio Único** en el sistema central.`, 'bot');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        reportData: reportData, // Datos del reporte
+                        imageData: imageData   // Datos de la imagen (base64 y tipo)
+                    })
+                });
 
-            fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(reportData)
-            })
-            .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return response.json();
-            })
-            .then(data => {
+                
+                const data = await response.json();
+
                 // ✅ CLAVE: El servidor debe devolver el folio generado (data.folio)
                 if (data.success && data.folio) { 
-                    const reportSummary = `
+                    let reportSummary = `
                         **✅ REPORTE GENERADO CON ÉXITO**
                         **Folio:** ${data.folio}
                         **Dirección:** ${reportData.direccion}
                         **Falla de la Luminaria:** ${reportData.descripcion_falla}        
-                        Tu reporte ha sido registrado. Conserva el **Folio ${data.folio}** para dar seguimiento.
                     `;
+                    
+                    if (data.imageUrl && data.imageUrl !== 'No') {
+                         reportSummary += `\n\n**Foto de Reporte:** [Ver Imagen Adjunta](${data.imageUrl})`;
+                    } else if (data.imageUrl.startsWith("Fallo")) {
+                         reportSummary += `\n\n⚠️ **Alerta:** La foto no se pudo guardar. ${data.imageUrl}`;
+                    } else {
+                         reportSummary += `\n\n**Foto de Reporte:** No`;
+                    }
+                    
+                    reportSummary += `\n\nTu reporte ha sido registrado. Conserva el **Folio ${data.folio}** para dar seguimiento.`;
+
                     appendMessage(reportSummary, 'bot');
                 } else {
                     // Si el servidor responde pero indica fallo interno 
                     appendMessage(`⚠️ **Fallo en el Sistema de Registro:** El servidor no pudo asignar el folio. Intenta más tarde o llama al 072.`, 'bot');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error de fetch o de la API:', error);
                 appendMessage(`❌ **Error de red o del servidor:** No se pudo contactar al sistema central. Llama al 072.`, 'bot');
-            });
+            }
         }
 
         // --- LÓGICA DE ENVÍO Y REPORTE ---
 
-        function sendMessage() {
+        async function sendMessage() {
             const userText = userInput.value.trim();
             const file = fileInput.files[0];
-            let imageURL = null;
+            let imageURL_Local = null; // URL local para mostrar en el chat
+            let imageData_Server = null; // Datos Base64 para enviar al servidor
 
             if (!userText && !file) {
                 return;
             }
-
+            
+            // 1. Si hay archivo, leerlo y preparar datos
             if (file) {
-                imageURL = URL.createObjectURL(file);
+                imageURL_Local = URL.createObjectURL(file);
+                imageData_Server = await readFileAsBase64(file);
             }
 
             const messageToSend = userText || '[Imagen de Reporte Adjunta]';
-            appendMessage(messageToSend, 'user', imageURL);
+            appendMessage(messageToSend, 'user', imageURL_Local);
 
             if (userText || file) {
                 const textToProcess = userText || "quiero reportar una falla";
 
                 if (currentReportLocation !== undefined && currentReportLocation !== null) {
                     
-                    // ❌ EL FOLIO YA NO SE CALCULA AQUÍ
                     const textoCompleto = userText.trim();
                     let direccion = textoCompleto;
                     let descripcionFalla = "Falla sin describir o el texto no siguió el formato: Dirección, Falla.";
@@ -550,16 +579,19 @@
                         `${currentReportLocation.latitude.toFixed(6)}, ${currentReportLocation.longitude.toFixed(6)}` : 'No obtenida / Permiso rechazado';
 
                     const reportData = {
-                        // ❌ EL CAMPO 'folio' YA NO SE ENVÍA. EL SERVIDOR LO ASIGNARÁ.
+                        // El campo 'folio' ya NO se envía. EL SERVIDOR LO ASIGNARÁ.
                         fecha: new Date().toLocaleString(),
                         direccion: direccion,
                         descripcion_falla: descripcionFalla,
                         ubicacionGPS: gpsString,
-                        imagenURL: file ? `Adjunta (${file.name})` : 'No',
+                        // El campo 'imagenURL' se envía como placeholder 'Pendiente'
+                        // y el servidor lo actualizará con el URL de GitHub o 'No'
+                        imagenURL: file ? 'Pendiente' : 'No', 
                         estado: 'Reportado'
                     };
 
-                    sendReportToBackend(reportData); 
+                    // 2. Llamar a la función de reporte con ambos paquetes de datos
+                    sendReportToBackend(reportData, imageData_Server); 
 
                     currentReportLocation = undefined;
                     fileInput.value = ''; 
@@ -592,7 +624,7 @@
                         };
                         
                         // Enlace corregido para Google Maps
-                        const mapLink = `http://maps.google.com/?q=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
+                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${currentReportLocation.latitude},${currentReportLocation.longitude}`;
                         
                         appendMessage(`✅ **Ubicación GPS Obtenida:** Lat: ${currentReportLocation.latitude.toFixed(5)}, Long: ${currentReportLocation.longitude.toFixed(5)}.<br>([Ver en Mapa](${mapLink}))`, 'bot');
                         
