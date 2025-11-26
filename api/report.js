@@ -2,12 +2,12 @@
 
 const { Octokit } = require("@octokit/rest");
 
-// --- ⚠️ ¡IMPORTANTE! Reemplaza con tus datos de Repositorio (NO CAMBIES ESTO SI YA ESTÁ BIEN)
+// --- ⚠️ ¡IMPORTANTE! Tus datos de Repositorio (No cambiar si ya están correctos)
 const REPO_OWNER = 'TanniaRmz'; // Tu nombre de usuario
 const REPO_NAME = 'lavozdelaluz_lumibot'; 
 // ---
 
-// El Token es extraído de las Variables de Entorno, NUNCA expuesto en el código.
+// El Token es extraído de las Variables de Entorno de Vercel (GITHUB_TOKEN)
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN; 
 
 const octokit = new Octokit({
@@ -24,7 +24,6 @@ async function getNextGlobalFolio(octokitInstance) {
     let maxFolio = 0;
     
     try {
-        // 1. Obtener la lista de archivos en la carpeta 'reports'
         const { data } = await octokitInstance.repos.getContent({
             owner: REPO_OWNER,
             repo: REPO_NAME,
@@ -32,15 +31,14 @@ async function getNextGlobalFolio(octokitInstance) {
             ref: 'main' // Rama principal
         });
 
-        // 2. Iterar y encontrar el folio numérico más alto
         if (Array.isArray(data)) {
             data.forEach(item => {
                 if (item.type === 'file' && item.name.startsWith('F-')) {
-                    // El nombre de archivo es F-XXXX-YYYYMMDD.json
+                    // Extrae el número del nombre del archivo (ej: 'F-0012-fecha.json' -> '0012')
                     const parts = item.name.split('-');
                     if (parts.length >= 2) {
-                        // El número de folio es la segunda parte (ej: '0001')
-                        const folioNumber = parseInt(parts[1], 10);
+                        const folioNumberString = parts[1]; 
+                        const folioNumber = parseInt(folioNumberString, 10);
                         if (!isNaN(folioNumber) && folioNumber > maxFolio) {
                             maxFolio = folioNumber;
                         }
@@ -49,7 +47,7 @@ async function getNextGlobalFolio(octokitInstance) {
             });
         }
     } catch (error) {
-        // Si la carpeta no existe (error 404), asumimos que el contador es 0.
+        // Ignoramos el error 404 si la carpeta aún no existe
         if (error.status !== 404) {
             console.error("Error al obtener el historial de folios de GitHub:", error.message);
             throw new Error("Fallo al calcular el siguiente folio.");
@@ -57,7 +55,6 @@ async function getNextGlobalFolio(octokitInstance) {
     }
     
     const nextFolioNumber = maxFolio + 1;
-    // 3. Formatear y devolver F-0001 (4 dígitos)
     return `F-${String(nextFolioNumber).padStart(4, '0')}`;
 }
 
@@ -68,7 +65,8 @@ module.exports = async (req, res) => {
         return res.status(405).json({ success: false, error: 'Solo se permite el método POST.' });
     }
 
-    const { reportData, imageData } = req.body; // Ahora esperamos reportData E imageData
+    // Esperamos los datos del reporte Y los datos de la imagen
+    const { reportData, imageData } = req.body; 
 
     if (!reportData) {
         return res.status(400).json({ success: false, error: 'Datos de reporte vacíos.' });
@@ -84,9 +82,15 @@ module.exports = async (req, res) => {
 
         // 2. Si hay datos de imagen, procesarla y subirla a GitHub
         if (imageData && imageData.base64 && imageData.fileType) {
-            const imageBuffer = Buffer.from(imageData.base64, 'base64');
-            const imageExtension = imageData.fileType.split('/')[1]; // ej: 'png', 'jpeg'
-            const imagePath = `reports/images/${newFolio}-${Date.now()}.${imageExtension}`; // Ruta dentro de 'reports/images'
+            
+            // Lógica para remover el prefijo "data:image/..." antes de la subida
+            const base64Data = imageData.base64.split(';base64,').pop();
+            
+            // Decodifica la Base64 pura a un Buffer
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            const imageExtension = imageData.fileType.split('/')[1] || 'jpg'; // Extensión por defecto 'jpg'
+            const imagePath = `reports/images/${newFolio}-${Date.now()}.${imageExtension}`; // Ruta única dentro de 'reports/images'
 
             try {
                 await octokit.repos.createOrUpdateFileContents({
@@ -94,15 +98,15 @@ module.exports = async (req, res) => {
                     repo: REPO_NAME,
                     path: imagePath,
                     message: `[Lumi-Bot] Imagen para Reporte #${newFolio}`,
-                    content: imageBuffer.toString('base64'), // Ya es base64
+                    content: imageBuffer.toString('base64'), // Re-codifica el Buffer a Base64 para la API
                     branch: 'main',
                 });
-                // Construir la URL pública de la imagen en GitHub
-                imageUrlInGitHub = `https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/main/${imagePath}?raw=true`;
+                
+                // CORRECCIÓN CLAVE: Usar raw.githubusercontent.com para que la imagen se cargue correctamente
+                imageUrlInGitHub = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${imagePath}`;
                 console.log(`Imagen subida a: ${imageUrlInGitHub}`);
             } catch (imageError) {
                 console.error("Error al subir la imagen a GitHub:", imageError.message);
-                // No detenemos el reporte si falla la imagen, pero registramos el fallo
                 imageUrlInGitHub = `Fallo al subir imagen: ${imageError.message}`;
             }
         }
@@ -132,7 +136,7 @@ module.exports = async (req, res) => {
         res.status(200).json({
             success: true,
             folio: newFolio, 
-            imageUrl: imageUrlInGitHub, // Devolvemos la URL de la imagen si se subió
+            imageUrl: imageUrlInGitHub, 
             message: `Reporte ${newFolio} guardado en GitHub.`,
             commit: response.data.commit.html_url,
         });
