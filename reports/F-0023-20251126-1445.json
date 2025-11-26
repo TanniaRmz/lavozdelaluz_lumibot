@@ -1,0 +1,11 @@
+{
+  "nombre": "anonimo",
+  "numero": "lol",
+  "fecha": "26/11/2025, 8:45:25 a.m.",
+  "direccion": "silvestre gomez",
+  "descripcion_falla": "las luminarias estan encendidas hace una semana",
+  "ubicacionGPS": "21.907946, -102.311197",
+  "imagenURL": "https://raw.githubusercontent.com/TanniaRmz/lavozdelaluz_lumibot/main/reports/images/F-0023-1764168327686.png",
+  "estado": "Reportado",
+  "folio": "F-0023"
+}
